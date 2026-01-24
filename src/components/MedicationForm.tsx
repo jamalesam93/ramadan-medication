@@ -35,6 +35,61 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
   const [showInstructions, setShowInstructions] = useState(true);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   
+  // Dosage validation state
+  const [dosageWarning, setDosageWarning] = useState<string | null>(null);
+  
+  // Valid units for dosage
+  const validUnits = ['mg', 'g', 'mcg', 'ml', 'l', 'tablet', 'tablets', 'capsule', 'capsules', 'drop', 'drops', 'puff', 'puffs', 'unit', 'units', 'iu', 'cc', 'tsp', 'tbsp', 'oz',
+    // Arabic units
+    'ملغ', 'غ', 'مل', 'قرص', 'أقراص', 'كبسولة', 'كبسولات', 'قطرة', 'قطرات', 'وحدة', 'وحدات'];
+  
+  // Validate dosage function
+  const validateDosage = (value: string): string | null => {
+    if (!value.trim()) return null;
+    
+    const trimmedValue = value.trim().toLowerCase();
+    
+    // Check if it contains at least one number
+    const hasNumber = /\d/.test(trimmedValue);
+    if (!hasNumber) {
+      return isArabic 
+        ? 'يجب أن تحتوي الجرعة على رقم (مثال: 500 ملغ، قرص واحد)'
+        : 'Dosage should include a number (e.g., 500mg, 1 tablet)';
+    }
+    
+    // Extract the numeric value
+    const numberMatch = trimmedValue.match(/(\d+\.?\d*)/);
+    const numericValue = numberMatch ? parseFloat(numberMatch[1]) : 0;
+    
+    // Check for unusually high doses
+    if (numericValue > 5000) {
+      return isArabic
+        ? 'تحذير: الجرعة تبدو مرتفعة جداً. يرجى التأكد من صحتها'
+        : 'Warning: This dosage seems unusually high. Please verify it is correct';
+    }
+    
+    // Check if it has a valid unit
+    const hasUnit = validUnits.some(unit => trimmedValue.includes(unit));
+    if (!hasUnit) {
+      // Check for common typos or missing spaces
+      const commonPatterns = /\d+\s*(mg|g|ml|tablet|capsule|قرص|كبسولة)/i;
+      if (!commonPatterns.test(trimmedValue)) {
+        return isArabic
+          ? 'يُنصح بإضافة الوحدة (مثال: ملغ، قرص، كبسولة، مل)'
+          : 'Consider adding a unit (e.g., mg, tablet, capsule, ml)';
+      }
+    }
+    
+    // Check for zero dosage
+    if (numericValue === 0) {
+      return isArabic
+        ? 'الجرعة لا يمكن أن تكون صفراً'
+        : 'Dosage cannot be zero';
+    }
+    
+    return null;
+  };
+  
   // Search for drugs as user types
   useEffect(() => {
     if (name.length >= 2) {
@@ -57,6 +112,20 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  
+  // Validate dosage when it changes (with debounce)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (dosage) {
+        const warning = validateDosage(dosage);
+        setDosageWarning(warning);
+      } else {
+        setDosageWarning(null);
+      }
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [dosage, isArabic]);
   
   // Handle selecting a drug from suggestions
   const handleSelectDrug = (drug: DrugInstruction) => {
@@ -267,8 +336,27 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
           onChange={(e) => setDosage(e.target.value)}
           placeholder={t.medications.dosagePlaceholder}
           required
-          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${isRTL ? 'text-right' : ''}`}
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${isRTL ? 'text-right' : ''} ${
+            dosageWarning 
+              ? 'border-amber-400 bg-amber-50' 
+              : 'border-gray-300'
+          }`}
         />
+        {/* Dosage Warning */}
+        {dosageWarning && (
+          <div className={`mt-2 p-3 rounded-lg bg-amber-50 border border-amber-200 ${isRTL ? 'text-right' : ''}`}>
+            <div className={`flex items-start gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-700">{dosageWarning}</p>
+            </div>
+          </div>
+        )}
+        {/* Dosage Examples */}
+        <p className={`text-xs text-gray-400 mt-1 ${isRTL ? 'text-right' : ''}`}>
+          {isArabic 
+            ? 'أمثلة: 500 ملغ، قرص واحد، 10 مل، كبسولتين'
+            : 'Examples: 500mg, 1 tablet, 10ml, 2 capsules'}
+        </p>
       </div>
 
       {/* Frequency */}
