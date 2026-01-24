@@ -17,6 +17,7 @@ import {
   Search,
 } from 'lucide-react';
 import { searchLocation, GeocodingResult } from '@/lib/geocoding';
+import { CalculationMethod } from '@/types';
 
 export default function SettingsPage() {
   const { t, isRTL } = useTranslation();
@@ -371,11 +372,11 @@ export default function SettingsPage() {
 
           <select
             value={calculationMethod}
-            onChange={(e) => setCalculationMethod(Number(e.target.value))}
+            onChange={(e) => setCalculationMethod(e.target.value as CalculationMethod)}
             className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${isRTL ? 'text-right' : ''}`}
           >
             {PRAYER_CALCULATION_METHODS.map((method) => (
-              <option key={method.value} value={method.value}>
+              <option key={method.label} value={method.label}>
                 {getMethodLabel(method.label)}
               </option>
             ))}
