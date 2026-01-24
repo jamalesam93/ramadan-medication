@@ -71,6 +71,13 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
     const numberMatch = trimmedValue.match(/(\d+\.?\d*)/);
     const numericValue = numberMatch ? parseFloat(numberMatch[1]) : 0;
     
+    // Check for zero dosage first
+    if (numericValue === 0) {
+      return isArabic
+        ? 'الجرعة لا يمكن أن تكون صفراً'
+        : 'Dosage cannot be zero';
+    }
+    
     // Check for unusually high doses
     if (numericValue > 5000) {
       return isArabic
@@ -78,86 +85,38 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
         : 'Warning: This dosage seems unusually high. Please verify it is correct';
     }
     
-    // Check if it has a valid unit
-    const hasUnit = validUnits.some(unit => trimmedValue.includes(unit));
-    if (!hasUnit) {
-      // Check for common typos or missing spaces
-      const commonPatterns = /\d+\s*(mg|g|ml|tablet|capsule|قرص|كبسولة)/i;
-      if (!commonPatterns.test(trimmedValue)) {
-        return isArabic
-          ? 'يُنصح بإضافة الوحدة (مثال: ملغ، قرص، كبسولة، مل)'
-          : 'Consider adding a unit (e.g., mg, tablet, capsule, ml)';
-      }
-    }
-    
-    // Check for zero dosage
-    if (numericValue === 0) {
-      return isArabic
-        ? 'الجرعة لا يمكن أن تكون صفراً'
-        : 'Dosage cannot be zero';
-    }
-    
-    // Check against drug-specific standard dosages if drug is selected
+    // PRIORITY: Check against drug-specific standard dosages FIRST if drug is selected
+    // This takes priority over generic "add unit" warnings
     if (drug && drug.standardDosages && drug.standardDosages.length > 0) {
-      const normalizedInput = normalizeDosage(value);
-      const normalizedStandards = drug.standardDosages.map(d => normalizeDosage(d));
+      // Extract standard dosage numeric values for comparison
+      const standardNumbers = drug.standardDosages.map(d => {
+        const match = d.match(/(\d+\.?\d*)/);
+        return match ? parseFloat(match[1]) : 0;
+      }).filter(n => n > 0);
       
-      // Extract numeric value and unit from input
-      const inputMatch = normalizedInput.match(/(\d+\.?\d*)\s*([a-z\u0600-\u06FF]+)?/i);
-      if (!inputMatch) {
-        // If we can't parse the input, skip drug-specific validation
-        return null;
-      }
+      // Check if the entered number matches any standard dosage number
+      const numberMatches = standardNumbers.includes(numericValue);
       
-      const inputNum = parseFloat(inputMatch[1]);
-      const inputUnit = inputMatch[2]?.toLowerCase().trim() || '';
-      
-      // Check if input matches any standard dosage
-      const matches = normalizedStandards.some(standard => {
-        // Exact match after normalization
-        if (normalizedInput === standard) return true;
-        
-        // Extract numeric value and unit from standard
-        const standardMatch = standard.match(/(\d+\.?\d*)\s*([a-z\u0600-\u06FF]+)?/i);
-        if (!standardMatch) return false;
-        
-        const standardNum = parseFloat(standardMatch[1]);
-        const standardUnit = standardMatch[2]?.toLowerCase().trim() || '';
-        
-        // If numbers don't match, it's not a match
-        if (inputNum !== standardNum) return false;
-        
-        // If numbers match, check units
-        // If both have no unit or same unit, it's a match
-        if (!inputUnit && !standardUnit) return true;
-        if (inputUnit && standardUnit && inputUnit === standardUnit) return true;
-        
-        // Handle unit variations (mg = ملغ, etc.)
-        const unitMap: Record<string, string[]> = {
-          'mg': ['mg', 'ملغ', 'ملجم'],
-          'g': ['g', 'غ', 'جرام'],
-          'mcg': ['mcg', 'مcg'],
-          'ml': ['ml', 'مل'],
-          'unit': ['unit', 'units', 'وحدة', 'وحدات'],
-          'iu': ['iu', 'units', 'وحدات'],
-        };
-        
-        // Check if both units are in the same equivalence group
-        for (const [key, variants] of Object.entries(unitMap)) {
-          if (variants.includes(inputUnit) && variants.includes(standardUnit)) {
-            return true;
-          }
-        }
-        
-        return false;
-      });
-      
-      if (!matches) {
+      if (!numberMatches) {
         const drugName = isArabic ? drug.nameAr : drug.name;
         const dosagesList = drug.standardDosages.join(', ');
         return isArabic
           ? `${value} ليست جرعة قياسية لـ ${drugName}. الجرعات الشائعة: ${dosagesList}`
           : `${value} is not a standard dosage for ${drugName}. Common dosages: ${dosagesList}`;
+      }
+      
+      // Number matches a standard dosage - validation passed for drug-specific check
+      return null;
+    }
+    
+    // Generic validation: only check for unit if no drug is selected
+    const hasUnit = validUnits.some(unit => trimmedValue.includes(unit));
+    if (!hasUnit) {
+      const commonPatterns = /\d+\s*(mg|g|ml|tablet|capsule|قرص|كبسولة)/i;
+      if (!commonPatterns.test(trimmedValue)) {
+        return isArabic
+          ? 'يُنصح بإضافة الوحدة (مثال: ملغ، قرص، كبسولة، مل)'
+          : 'Consider adding a unit (e.g., mg, tablet, capsule, ml)';
       }
     }
     

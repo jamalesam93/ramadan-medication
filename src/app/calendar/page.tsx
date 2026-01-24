@@ -262,7 +262,7 @@ export default function CalendarPage() {
                           </div>
                         </div>
                         <span className="text-sm text-gray-600">
-                          {formatTime(new Date(dose.scheduledTime))}
+                          {formatTime(new Date(dose.scheduledTime), isRTL)}
                         </span>
                       </div>
                     );

@@ -85,7 +85,7 @@ export function DoseCard({ dose, medication, onMarkTaken, onSkip, isNext }: Dose
           <div className={`flex items-center gap-2 text-sm ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
             <Clock className="w-4 h-4 text-gray-400" />
             <span className={isPast && dose.status === 'pending' ? 'text-amber-600 font-medium' : 'text-gray-500'}>
-              {formatTime(scheduledTime)}
+              {formatTime(scheduledTime, isRTL)}
               {isPast && dose.status === 'pending' && ` (${t.doseStatus.overdue})`}
             </span>
           </div>

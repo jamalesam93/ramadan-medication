@@ -2,9 +2,11 @@ export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-export function formatTime12h(time: string): string {
+export function formatTime12h(time: string, isArabic: boolean = false): string {
   const [hours, minutes] = time.split(':').map(Number);
-  const period = hours >= 12 ? 'PM' : 'AM';
+  const period = hours >= 12 
+    ? (isArabic ? 'مساءً' : 'PM') 
+    : (isArabic ? 'صباحاً' : 'AM');
   const displayHours = hours % 12 || 12;
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
@@ -73,10 +75,12 @@ export function getTimeRemaining(targetTime: string): {
   return { hours, minutes, seconds, totalSeconds, isOverdue };
 }
 
-export function formatTime(date: Date): string {
+export function formatTime(date: Date, isArabic: boolean = false): string {
   const hours = date.getHours();
   const minutes = date.getMinutes();
-  const period = hours >= 12 ? 'PM' : 'AM';
+  const period = hours >= 12 
+    ? (isArabic ? 'مساءً' : 'PM') 
+    : (isArabic ? 'صباحاً' : 'AM');
   const displayHours = hours % 12 || 12;
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }

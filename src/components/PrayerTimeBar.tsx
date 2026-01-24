@@ -66,7 +66,7 @@ export function PrayerTimeBar({ prayerTimes, isLoading }: PrayerTimeBarProps) {
             <Sun className="w-5 h-5 text-amber-300" />
             <span className="text-sm font-medium opacity-90">{t.prayer.iftar}</span>
           </div>
-          <span className="text-lg font-bold">{formatTime12h(prayerTimes.maghrib)}</span>
+          <span className="text-lg font-bold">{formatTime12h(prayerTimes.maghrib, isRTL)}</span>
         </div>
 
         {/* Countdown */}
@@ -87,7 +87,7 @@ export function PrayerTimeBar({ prayerTimes, isLoading }: PrayerTimeBarProps) {
             <Moon className="w-5 h-5 text-cyan-300" />
             <span className="text-sm font-medium opacity-90">{t.prayer.suhoorEnds}</span>
           </div>
-          <span className="text-lg font-bold">{formatTime12h(prayerTimes.fajr)}</span>
+          <span className="text-lg font-bold">{formatTime12h(prayerTimes.fajr, isRTL)}</span>
         </div>
       </div>
 
@@ -95,7 +95,7 @@ export function PrayerTimeBar({ prayerTimes, isLoading }: PrayerTimeBarProps) {
       <div className="mt-3 pt-3 border-t border-white/20 text-center">
         <span className="text-xs opacity-75">{t.prayer.nonFastingHours}: </span>
         <span className="text-sm font-medium">
-          {formatTime12h(prayerTimes.maghrib)} - {formatTime12h(prayerTimes.fajr)}
+          {formatTime12h(prayerTimes.maghrib, isRTL)} - {formatTime12h(prayerTimes.fajr, isRTL)}
         </span>
       </div>
     </div>

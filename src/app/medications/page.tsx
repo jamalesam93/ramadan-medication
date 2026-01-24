@@ -165,7 +165,7 @@ export default function MedicationsPage() {
                                 className={`inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded ${isRTL ? 'flex-row-reverse' : ''}`}
                               >
                                 <Clock className="w-3 h-3" />
-                                {formatTime(time)}
+                                {formatTime(time, isRTL)}
                               </span>
                             ))}
                           </div>
