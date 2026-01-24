@@ -5,7 +5,7 @@ import { useTranslation, useLanguage } from '@/contexts/LanguageContext';
 import { Medication, MedicationFrequency, TimePreference, PillColor, PillShape } from '@/types';
 import { PILL_COLORS_ARRAY as PILL_COLORS, PILL_SHAPES_ARRAY as PILL_SHAPES } from '@/lib/constants';
 import { Pill, AlertTriangle, Info, Lightbulb, Moon, Coffee, X } from 'lucide-react';
-import { searchDrugs, DrugInstruction, getFoodTimingText, getCategoryName } from '@/lib/drugDatabase';
+import { searchDrugs, searchDrug, DrugInstruction, getFoodTimingText, getCategoryName } from '@/lib/drugDatabase';
 
 interface MedicationFormProps {
   initialData?: Medication;
@@ -102,38 +102,50 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
       const normalizedInput = normalizeDosage(value);
       const normalizedStandards = drug.standardDosages.map(d => normalizeDosage(d));
       
+      // Extract numeric value and unit from input
+      const inputMatch = normalizedInput.match(/(\d+\.?\d*)\s*([a-z\u0600-\u06FF]+)?/i);
+      if (!inputMatch) {
+        // If we can't parse the input, skip drug-specific validation
+        return null;
+      }
+      
+      const inputNum = parseFloat(inputMatch[1]);
+      const inputUnit = inputMatch[2]?.toLowerCase().trim() || '';
+      
       // Check if input matches any standard dosage
       const matches = normalizedStandards.some(standard => {
-        // Exact match
+        // Exact match after normalization
         if (normalizedInput === standard) return true;
         
-        // Check if they contain the same numeric value and unit
-        const inputMatch = normalizedInput.match(/(\d+\.?\d*)\s*([a-z\u0600-\u06FF]+)?/i);
+        // Extract numeric value and unit from standard
         const standardMatch = standard.match(/(\d+\.?\d*)\s*([a-z\u0600-\u06FF]+)?/i);
+        if (!standardMatch) return false;
         
-        if (inputMatch && standardMatch) {
-          const inputNum = parseFloat(inputMatch[1]);
-          const standardNum = parseFloat(standardMatch[1]);
-          const inputUnit = inputMatch[2]?.toLowerCase() || '';
-          const standardUnit = standardMatch[2]?.toLowerCase() || '';
-          
-          // If numbers match and units match (or both missing), consider it a match
-          if (inputNum === standardNum) {
-            if (!inputUnit && !standardUnit) return true;
-            if (inputUnit && standardUnit && inputUnit === standardUnit) return true;
-            // Handle unit variations (mg = ملغ, etc.)
-            const unitMap: Record<string, string[]> = {
-              'mg': ['mg', 'ملغ', 'ملجم'],
-              'g': ['g', 'غ', 'جرام'],
-              'mcg': ['mcg', 'مcg'],
-              'ml': ['ml', 'مل'],
-              'unit': ['unit', 'units', 'وحدة', 'وحدات'],
-            };
-            for (const [key, variants] of Object.entries(unitMap)) {
-              if (variants.includes(inputUnit) && variants.includes(standardUnit)) {
-                return true;
-              }
-            }
+        const standardNum = parseFloat(standardMatch[1]);
+        const standardUnit = standardMatch[2]?.toLowerCase().trim() || '';
+        
+        // If numbers don't match, it's not a match
+        if (inputNum !== standardNum) return false;
+        
+        // If numbers match, check units
+        // If both have no unit or same unit, it's a match
+        if (!inputUnit && !standardUnit) return true;
+        if (inputUnit && standardUnit && inputUnit === standardUnit) return true;
+        
+        // Handle unit variations (mg = ملغ, etc.)
+        const unitMap: Record<string, string[]> = {
+          'mg': ['mg', 'ملغ', 'ملجم'],
+          'g': ['g', 'غ', 'جرام'],
+          'mcg': ['mcg', 'مcg'],
+          'ml': ['ml', 'مل'],
+          'unit': ['unit', 'units', 'وحدة', 'وحدات'],
+          'iu': ['iu', 'units', 'وحدات'],
+        };
+        
+        // Check if both units are in the same equivalence group
+        for (const [key, variants] of Object.entries(unitMap)) {
+          if (variants.includes(inputUnit) && variants.includes(standardUnit)) {
+            return true;
           }
         }
         
@@ -152,15 +164,59 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
     return null;
   };
   
-  // Search for drugs as user types
+  // Search for drugs as user types and auto-detect matches
   useEffect(() => {
     if (name.length >= 2) {
       const results = searchDrugs(name, 5);
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
+      
+      // Auto-detect if typed name matches a drug (for dosage validation)
+      const normalizedName = name.toLowerCase().trim();
+      
+      // Check if any result matches exactly (case-insensitive)
+      const exactMatch = results.find(drug => {
+        const drugNameEn = drug.name.toLowerCase().trim();
+        const drugNameAr = drug.nameAr.toLowerCase().trim();
+        return normalizedName === drugNameEn || normalizedName === drugNameAr;
+      });
+      
+      // Also check aliases
+      const aliasMatch = results.find(drug => {
+        const aliases = [...drug.aliases, ...drug.aliasesAr].map(a => a.toLowerCase().trim());
+        return aliases.includes(normalizedName);
+      });
+      
+      const matchedDrug = exactMatch || aliasMatch;
+      
+      if (matchedDrug) {
+        setSelectedDrug((prev) => {
+          // Only update if different to avoid unnecessary re-renders
+          if (!prev || prev.id !== matchedDrug.id) {
+            return matchedDrug;
+          }
+          return prev;
+        });
+      } else {
+        // Clear selectedDrug if name doesn't match anymore
+        setSelectedDrug((prev) => {
+          if (prev) {
+            const prevNameEn = prev.name.toLowerCase().trim();
+            const prevNameAr = prev.nameAr.toLowerCase().trim();
+            const prevAliases = [...prev.aliases, ...prev.aliasesAr].map(a => a.toLowerCase().trim());
+            const matchesPrev = normalizedName === prevNameEn || normalizedName === prevNameAr || prevAliases.includes(normalizedName);
+            if (!matchesPrev) {
+              return null;
+            }
+          }
+          return prev;
+        });
+      }
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
+      // Clear selectedDrug if name is too short
+      setSelectedDrug(null);
     }
   }, [name]);
   
@@ -260,8 +316,14 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
           value={name}
           onChange={(e) => {
             setName(e.target.value);
+            // Clear selectedDrug if user changes the name manually
+            setSelectedDrug((prev) => {
+              if (prev && e.target.value !== (isArabic ? prev.nameAr : prev.name)) {
+                return null;
+              }
+              return prev;
+            });
             if (selectedDrug && e.target.value !== (isArabic ? selectedDrug.nameAr : selectedDrug.name)) {
-              setSelectedDrug(null);
               setShowInstructions(true);
             }
           }}
