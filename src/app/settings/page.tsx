@@ -28,13 +28,13 @@ export default function SettingsPage() {
     setCalculationMethod,
     notificationsEnabled,
     setNotificationsEnabled,
-    preDoseAlertMinutes,
-    setPreDoseAlertMinutes,
+    preAlertMinutes,
+    setPreAlertMinutes,
     suhoorAlertMinutes,
     setSuhoorAlertMinutes,
     isRamadanMode,
     setIsRamadanMode,
-    clearAllData,
+    resetSettings,
   } = useSettingsStore();
   const { clearMedications } = useMedicationStore();
 
@@ -163,7 +163,7 @@ export default function SettingsPage() {
   };
 
   const handleClearAllData = () => {
-    clearAllData();
+    resetSettings();
     clearMedications();
     setShowClearConfirm(false);
   };
@@ -422,8 +422,8 @@ export default function SettingsPage() {
                   </label>
                   <p className="text-xs text-gray-500 mb-2">{t.settings.minutesBeforeDose}</p>
                   <select
-                    value={preDoseAlertMinutes}
-                    onChange={(e) => setPreDoseAlertMinutes(Number(e.target.value))}
+                    value={preAlertMinutes}
+                    onChange={(e) => setPreAlertMinutes(Number(e.target.value))}
                     className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 ${isRTL ? 'text-right' : ''}`}
                   >
                     <option value={5}>5 {t.time.minutes}</option>
