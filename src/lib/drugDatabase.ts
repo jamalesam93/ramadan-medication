@@ -1470,13 +1470,29 @@ export function getDrugsByCategory(category: DrugCategory): DrugInstruction[] {
 export function getFoodTimingText(timing: FoodTiming, isArabic: boolean = false): string {
   const texts: Record<FoodTiming, { en: string; ar: string }> = {
     with_food: { en: 'Take with food', ar: 'تناوله مع الطعام' },
-    empty_stomach: { en: 'Take on empty stomach', ar: 'تناوله على معدة فارغة' },
-    before_meal: { en: 'Take before meals', ar: 'تناوله قبل الوجبات' },
-    after_meal: { en: 'Take after meals', ar: 'تناوله بعد الوجبات' },
-    any: { en: 'Can be taken any time', ar: 'يمكن تناوله في أي وقت' },
+    empty_stomach: { en: 'After dates & water', ar: 'بعد التمر والماء' },
+    before_meal: { en: 'Before meals', ar: 'قبل الوجبات' },
+    after_meal: { en: 'After meals', ar: 'بعد الوجبات' },
+    any: { en: 'Any time', ar: 'أي وقت' },
   };
   
   return isArabic ? texts[timing].ar : texts[timing].en;
+}
+
+/**
+ * Get Ramadan-specific empty stomach guidance
+ */
+export function getEmptyStomachRamadanGuidance(isArabic: boolean = false): { title: string; description: string } {
+  if (isArabic) {
+    return {
+      title: '⏰ يؤخذ على معدة فارغة',
+      description: 'في رمضان: تناول هذا الدواء مباشرة بعد كسر الصيام بالتمر والماء، قبل تناول الوجبة الرئيسية. انتظر 30-60 دقيقة قبل الأكل.'
+    };
+  }
+  return {
+    title: '⏰ Take on Empty Stomach',
+    description: 'During Ramadan: Take this medication right after breaking your fast with dates and water, before your main meal. Wait 30-60 minutes before eating.'
+  };
 }
 
 /**

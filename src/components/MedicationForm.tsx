@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation, useLanguage } from '@/contexts/LanguageContext';
-import { Medication, MedicationFrequency, TimePreference, PillColor, PillShape } from '@/types';
-import { PILL_COLORS_ARRAY as PILL_COLORS, PILL_SHAPES_ARRAY as PILL_SHAPES } from '@/lib/constants';
+import { Medication, MedicationFrequency, TimePreference } from '@/types';
 import { Pill, AlertTriangle, Info, Lightbulb, Moon, Coffee, X } from 'lucide-react';
-import { searchDrugs, searchDrug, DrugInstruction, getFoodTimingText, getCategoryName } from '@/lib/drugDatabase';
+import { searchDrugs, searchDrug, DrugInstruction, getFoodTimingText, getCategoryName, getEmptyStomachRamadanGuidance } from '@/lib/drugDatabase';
 
 interface MedicationFormProps {
   initialData?: Medication;
@@ -24,9 +23,6 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
   const [frequency, setFrequency] = useState<MedicationFrequency>(initialData?.frequency || 'once');
   const [timePreference, setTimePreference] = useState<TimePreference>(initialData?.timePreference || 'any');
   const [withFood, setWithFood] = useState(initialData?.withFood || false);
-  const [pillColor, setPillColor] = useState<PillColor | undefined>(initialData?.pillColor);
-  const [pillShape, setPillShape] = useState<PillShape | undefined>(initialData?.pillShape);
-  const [notes, setNotes] = useState(initialData?.notes || '');
   
   // Drug suggestion states
   const [suggestions, setSuggestions] = useState<DrugInstruction[]>([]);
@@ -232,9 +228,6 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
       frequency,
       timePreference,
       withFood,
-      pillColor,
-      pillShape,
-      notes: notes || undefined,
     });
   };
 
@@ -251,17 +244,10 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
     { value: 'any', label: t.timePreference.any, description: t.timePreference.anyDesc },
   ];
 
-  const getPillColorLabel = (value: string): string => {
-    const colorKey = value.toLowerCase() as keyof typeof t.pillColors;
-    return t.pillColors[colorKey] || value;
-  };
-
-  const getPillShapeLabel = (value: string): string => {
-    const shapeKey = value.toLowerCase() as keyof typeof t.pillShapes;
-    return t.pillShapes[shapeKey] || value;
-  };
-
   const showFrequencyWarning = frequency === 'thrice' || frequency === 'four_times';
+  
+  // Get Ramadan empty stomach guidance
+  const emptyStomachGuidance = getEmptyStomachRamadanGuidance(isArabic);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -405,6 +391,18 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
               </ul>
             </div>
           )}
+          
+          {/* Special Empty Stomach Ramadan Guidance */}
+          {(selectedDrug.foodTiming === 'empty_stomach' || selectedDrug.foodTiming === 'before_meal') && (
+            <div className={`bg-amber-50 border-2 border-amber-300 rounded-lg p-4 ${isRTL ? 'text-right' : ''}`}>
+              <h4 className="font-semibold text-amber-800 mb-2">
+                {emptyStomachGuidance.title}
+              </h4>
+              <p className="text-sm text-amber-700">
+                {emptyStomachGuidance.description}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
@@ -520,74 +518,15 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
         </button>
       </div>
 
-      {/* Pill Color */}
-      <div>
-        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-          {t.medications.pillColor}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {PILL_COLORS.map((color) => (
-            <button
-              key={color.value}
-              type="button"
-              onClick={() => setPillColor(pillColor === color.value ? undefined : color.value)}
-              className={`w-10 h-10 rounded-full border-2 transition-all ${
-                pillColor === color.value ? 'border-emerald-500 scale-110' : 'border-gray-300'
-              }`}
-              style={{ backgroundColor: color.color }}
-              title={getPillColorLabel(color.value)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Pill Shape */}
-      <div>
-        <label className={`block text-sm font-medium text-gray-700 mb-2 ${isRTL ? 'text-right' : ''}`}>
-          {t.medications.pillShape}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {PILL_SHAPES.map((shape) => (
-            <button
-              key={shape.value}
-              type="button"
-              onClick={() => setPillShape(pillShape === shape.value ? undefined : shape.value)}
-              className={`px-4 py-2 rounded-lg border-2 text-sm transition-all ${
-                pillShape === shape.value
-                  ? 'border-emerald-500 bg-emerald-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              {getPillShapeLabel(shape.value)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Notes */}
-      <div>
-        <label className={`block text-sm font-medium text-gray-700 mb-1 ${isRTL ? 'text-right' : ''}`}>
-          {t.medications.notes}
-        </label>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder={t.medications.notesPlaceholder}
-          rows={3}
-          className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none ${isRTL ? 'text-right' : ''}`}
-        />
-      </div>
-
       {/* Preview */}
       {(name || dosage) && (
         <div className="p-4 bg-gray-50 rounded-lg">
-          <p className={`text-sm text-gray-500 mb-2 ${isRTL ? 'text-right' : ''}`}>Preview:</p>
+          <p className={`text-sm text-gray-500 mb-2 ${isRTL ? 'text-right' : ''}`}>
+            {isArabic ? 'معاينة:' : 'Preview:'}
+          </p>
           <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: pillColor ? PILL_COLORS.find(c => c.value === pillColor)?.color : '#e0e0e0' }}
-            >
-              <Pill className={`w-6 h-6 ${pillColor === 'white' ? 'text-gray-600' : 'text-white'}`} />
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-emerald-100">
+              <Pill className="w-6 h-6 text-emerald-600" />
             </div>
             <div className={isRTL ? 'text-right' : ''}>
               <p className="font-semibold text-gray-800">{name || t.medications.medicationName}</p>

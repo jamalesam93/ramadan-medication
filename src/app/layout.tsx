@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "Ramadan Medication - أدوية رمضان",
   description: "A tool to help Muslims manage their medication schedules during Ramadan. أداة لمساعدة المسلمين على إدارة جداول أدويتهم خلال رمضان.",
   keywords: ["Ramadan", "medication", "fasting", "Islamic", "health", "reminder", "رمضان", "أدوية", "صيام", "إسلامي", "صحة"],
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

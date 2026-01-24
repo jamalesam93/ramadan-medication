@@ -17,7 +17,7 @@ export function Navigation() {
   ];
 
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50 md:static md:border-t-0 ${isRTL ? 'md:border-l' : 'md:border-r'} md:w-64 md:h-screen md:py-6`}>
+    <nav className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50 md:top-0 md:bottom-auto md:border-t-0 ${isRTL ? 'md:right-0 md:left-auto md:border-l' : 'md:left-0 md:right-auto md:border-r'} md:w-64 md:h-screen md:py-6`}>
       {/* Desktop Logo */}
       <div className="hidden md:block mb-8 px-4">
         <h1 className="text-xl font-bold text-emerald-700">🌙 {t.common.appName}</h1>

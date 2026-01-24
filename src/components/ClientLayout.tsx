@@ -17,7 +17,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
       style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : 'var(--font-inter), sans-serif' }}
     >
       <Navigation />
-      <main className="flex-1 pb-20 md:pb-0">
+      <main className={`flex-1 pb-20 md:pb-0 ${isRTL ? 'md:mr-64' : 'md:ml-64'}`}>
         {children}
       </main>
     </div>
