@@ -1,6 +1,6 @@
 # 🌙 Ramadan Medication Web App
 
-A web application to help Muslims manage their medication schedules during Ramadan by intelligently adjusting dose times to the non-fasting window (Iftar to Suhoor).
+A modern web application that helps Muslims manage their medication schedules during Ramadan. The app intelligently adjusts dose times to fit within the non-fasting window (Iftar to Suhoor) and supports both Ramadan and standard scheduling modes. Built with Next.js, TypeScript, and Tailwind CSS.
 
 ## Features
 
@@ -32,8 +32,8 @@ A web application to help Muslims manage their medication schedules during Ramad
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/ramadan-medication-app.git
-cd ramadan-medication-app/web-app
+git clone https://github.com/jamalesam93/ramadan-medication.git
+cd ramadan-medication
 ```
 
 2. Install dependencies:
@@ -51,7 +51,7 @@ npm run dev
 ## Project Structure
 
 ```
-web-app/
+ramadan-medication/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
 │   │   ├── page.tsx         # Home/Dashboard
@@ -70,6 +70,7 @@ web-app/
 │   │   ├── helpers.ts
 │   │   ├── prayerTimes.ts
 │   │   ├── doseMapper.ts
+│   │   ├── drugDatabase.ts
 │   │   └── storage.ts
 │   ├── stores/              # Zustand state stores
 │   │   ├── medicationStore.ts
@@ -78,9 +79,18 @@ web-app/
 │       └── index.ts
 ```
 
-## Deployment to Vercel
+## Deployment
 
-### Option 1: Deploy with Vercel CLI
+### Deploy to Netlify
+
+This app is configured for static export and can be deployed to Netlify:
+
+1. Push your code to GitHub
+2. Connect your repository to Netlify
+3. Build settings are already configured in `netlify.toml`
+4. Deploy automatically on push
+
+### Deploy to Vercel
 
 1. Install Vercel CLI:
 ```bash
@@ -89,30 +99,12 @@ npm install -g vercel
 
 2. Deploy:
 ```bash
-cd web-app
 vercel
 ```
 
 3. Follow the prompts to complete deployment
 
-### Option 2: Deploy via GitHub
-
-1. Push your code to GitHub:
-```bash
-git add .
-git commit -m "Initial commit"
-git push origin main
-```
-
-2. Go to [vercel.com](https://vercel.com)
-3. Click "New Project"
-4. Import your GitHub repository
-5. Set the **Root Directory** to `web-app`
-6. Click "Deploy"
-
-### Important: Root Directory Setting
-
-When deploying to Vercel, make sure to set the **Root Directory** to `web-app` since this is a monorepo with both mobile and web apps.
+Or connect your GitHub repository directly on [vercel.com](https://vercel.com)
 
 ## Usage
 
@@ -134,4 +126,14 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License - feel free to use this project for personal or commercial purposes.
+This project is open source and available under the [MIT License](LICENSE).
+
+## Important Notice
+
+⚠️ **Medical Disclaimer**: This app is for reminder purposes only. Always consult your doctor or pharmacist before adjusting your medication schedule during Ramadan. Some medications may not be safe to adjust and require special consideration during fasting.
+
+## Acknowledgments
+
+- [Aladhan API](https://aladhan.com/prayer-times-api) for prayer time calculations
+- [Next.js](https://nextjs.org/) for the amazing React framework
+- The Muslim community for the inspiration to build this tool
