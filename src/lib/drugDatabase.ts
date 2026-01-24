@@ -36,6 +36,7 @@ export interface DrugInstruction {
   avoidFoodsAr: string[];
   ramadanNotes: string[];
   ramadanNotesAr: string[];
+  standardDosages?: string[];
 }
 
 export const DRUG_DATABASE: DrugInstruction[] = [
@@ -78,6 +79,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله عند الإفطار والسحور مع الوجبات',
       'راقب مستويات السكر في الدم بشكل متكرر أثناء الصيام',
     ],
+    standardDosages: ['500mg', '850mg', '1000mg'],
   },
   {
     id: 'glibenclamide',
@@ -119,6 +121,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'قد تحتاج لتعديل الجرعة خلال رمضان',
       'تناوله قبل وجبة الإفطار',
     ],
+    standardDosages: ['2.5mg', '5mg'],
   },
   {
     id: 'gliclazide',
@@ -154,6 +157,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'خطر أقل من غليبنكلاميد لكن راقب بعناية',
       'تناوله مع وجبة الإفطار',
     ],
+    standardDosages: ['30mg', '60mg', '80mg'],
   },
   {
     id: 'insulin',
@@ -195,6 +199,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تعاون مع طبيبك قبل رمضان',
       'راقب السكر في الدم بشكل متكرر جداً',
     ],
+    standardDosages: ['10 units/ml', '100 units/ml'],
   },
 
   // ==================== HYPERTENSION MEDICATIONS ====================
@@ -236,6 +241,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'آمن للتناول مرة واحدة يومياً عند الإفطار',
       'حافظ على ترطيب جسمك خلال ساعات عدم الصيام',
     ],
+    standardDosages: ['2.5mg', '5mg', '10mg'],
   },
   {
     id: 'lisinopril',
@@ -273,6 +279,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مرة واحدة يومياً عند الإفطار',
       'راقب ضغط الدم بانتظام',
     ],
+    standardDosages: ['5mg', '10mg', '20mg', '40mg'],
   },
   {
     id: 'atenolol',
@@ -312,6 +319,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'آمن للتناول مرة واحدة يومياً',
       'إذا كنت تتناوله مرتين يومياً، تناوله عند الإفطار والسحور',
     ],
+    standardDosages: ['25mg', '50mg', '100mg'],
   },
   {
     id: 'losartan',
@@ -347,6 +355,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'آمن للجرعة مرة واحدة يومياً عند الإفطار',
       'حافظ على ترطيب جسمك خلال ساعات عدم الصيام',
     ],
+    standardDosages: ['25mg', '50mg', '100mg'],
   },
   {
     id: 'hydrochlorothiazide',
@@ -386,6 +395,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'قد يزيد خطر الجفاف - استشر الطبيب',
       'اشرب الكثير من السوائل خلال ساعات عدم الصيام',
     ],
+    standardDosages: ['12.5mg', '25mg'],
   },
 
   // ==================== HEART & CHOLESTEROL MEDICATIONS ====================
@@ -427,6 +437,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مع وجبة الإفطار',
       'الأسبرين بجرعة منخفضة آمن عموماً أثناء الصيام',
     ],
+    standardDosages: ['75mg', '81mg', '100mg', '300mg', '325mg'],
   },
   {
     id: 'atorvastatin',
@@ -466,6 +477,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مرة واحدة يومياً عند الإفطار أو السحور',
       'لا حاجة لتعديلات خاصة',
     ],
+    standardDosages: ['10mg', '20mg', '40mg', '80mg'],
   },
   {
     id: 'simvastatin',
@@ -501,6 +513,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله عند الإفطار (جرعة المساء)',
       'لا حاجة لتعديلات خاصة',
     ],
+    standardDosages: ['10mg', '20mg', '40mg'],
   },
   {
     id: 'warfarin',
@@ -542,6 +555,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله في نفس الوقت بالنسبة للإفطار كل يوم',
       'قد تحتاج لمراقبة INR بشكل متكرر أكثر',
     ],
+    standardDosages: ['1mg', '2mg', '2.5mg', '3mg', '4mg', '5mg', '6mg', '7.5mg', '10mg'],
   },
   {
     id: 'clopidogrel',
@@ -577,6 +591,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مرة واحدة يومياً عند الإفطار',
       'لا حاجة لتعديلات خاصة',
     ],
+    standardDosages: ['75mg'],
   },
 
   // ==================== PAIN MEDICATIONS ====================
@@ -616,6 +631,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'آمن للاستخدام خلال رمضان',
       'يمكن تناوله عند الإفطار أو السحور حسب الحاجة',
     ],
+    standardDosages: ['500mg', '1000mg'],
   },
   {
     id: 'ibuprofen',
@@ -655,6 +671,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مع وجبة الإفطار لحماية المعدة',
       'قد يزيد خطر الجفاف',
     ],
+    standardDosages: ['200mg', '400mg', '600mg'],
   },
   {
     id: 'diclofenac',
@@ -692,6 +709,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مع وجبة الإفطار',
       'تجنب الاستخدام طويل الأمد أثناء الصيام',
     ],
+    standardDosages: ['25mg', '50mg', '75mg', '100mg'],
   },
 
   // ==================== THYROID MEDICATIONS ====================
@@ -737,6 +755,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'إذا كنت تستيقظ قبل الفجر، تناوله مع الماء فقط',
       'بدلاً من ذلك، تناوله عند النوم (3+ ساعات بعد العشاء)',
     ],
+    standardDosages: ['25mcg', '50mcg', '75mcg', '100mcg', '125mcg', '150mcg', '175mcg', '200mcg'],
   },
 
   // ==================== GI MEDICATIONS ====================
@@ -778,6 +797,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله قبل 30 دقيقة من الإفطار',
       'يساعد في منع ارتجاع الحمض أثناء الصيام',
     ],
+    standardDosages: ['10mg', '20mg', '40mg'],
   },
   {
     id: 'pantoprazole',
@@ -811,6 +831,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله قبل 30 دقيقة من الإفطار',
       'ممتاز للوقاية من حرقة المعدة المرتبطة بالصيام',
     ],
+    standardDosages: ['20mg', '40mg'],
   },
   {
     id: 'ranitidine',
@@ -846,6 +867,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله قبل الإفطار للوقاية من الحموضة',
       'يمكن أيضاً تناوله عند السحور',
     ],
+    standardDosages: ['150mg', '300mg'],
   },
 
   // ==================== ANTIBIOTICS ====================
@@ -887,6 +909,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'وزع الجرعات بين الإفطار والسحور',
       'استشر الطبيب حول تعديل الجرعة ثلاث مرات يومياً',
     ],
+    standardDosages: ['250mg', '500mg'],
   },
   {
     id: 'azithromycin',
@@ -922,6 +945,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله بعد 1-2 ساعة من الإفطار',
       'الجرعة مرة واحدة يومياً تعمل جيداً خلال رمضان',
     ],
+    standardDosages: ['250mg', '500mg'],
   },
   {
     id: 'ciprofloxacin',
@@ -961,6 +985,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله بعيداً بساعتين عن منتجات الألبان',
       'حافظ على الترطيب خلال ساعات عدم الصيام',
     ],
+    standardDosages: ['250mg', '500mg', '750mg'],
   },
 
   // ==================== RESPIRATORY MEDICATIONS ====================
@@ -1000,6 +1025,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'البخاخات لا تفطر الصائم وفقاً لأغلب العلماء',
       'استخدمه حسب الحاجة لأعراض الربو',
     ],
+    standardDosages: ['100mcg', '200mcg'],
   },
   {
     id: 'montelukast',
@@ -1033,6 +1059,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مرة واحدة يومياً عند الإفطار',
       'لا حاجة لتعديلات خاصة',
     ],
+    standardDosages: ['4mg', '5mg', '10mg'],
   },
 
   // ==================== MENTAL HEALTH MEDICATIONS ====================
@@ -1074,6 +1101,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مرة واحدة يومياً عند الإفطار',
       'استمر في تناول الدواء بانتظام طوال رمضان',
     ],
+    standardDosages: ['25mg', '50mg', '100mg'],
   },
   {
     id: 'escitalopram',
@@ -1109,6 +1137,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مرة واحدة يومياً عند الإفطار',
       'لا حاجة لتعديل الجرعة',
     ],
+    standardDosages: ['5mg', '10mg', '20mg'],
   },
 
   // ==================== VITAMINS & SUPPLEMENTS ====================
@@ -1146,6 +1175,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مع وجبة الإفطار (تحتوي على دهون)',
       'لا حاجة لتعديلات خاصة',
     ],
+    standardDosages: ['400 IU', '800 IU', '1000 IU', '2000 IU', '5000 IU'],
   },
   {
     id: 'iron',
@@ -1183,6 +1213,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله بعد 1-2 ساعة من الإفطار مع فيتامين ج',
       'تجنب تناوله مع الشاي أو القهوة',
     ],
+    standardDosages: ['65mg', '100mg', '200mg', '325mg'],
   },
   {
     id: 'calcium',
@@ -1220,6 +1251,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مع الإفطار أو السحور',
       'أبعده عن أدوية الغدة الدرقية بـ 4 ساعات',
     ],
+    standardDosages: ['500mg', '1000mg'],
   },
   {
     id: 'multivitamin',
@@ -1255,6 +1287,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله مع وجبة الإفطار',
       'لا حاجة لتعديلات خاصة',
     ],
+    standardDosages: ['1 tablet'],
   },
   {
     id: 'folic_acid',
@@ -1290,6 +1323,7 @@ export const DRUG_DATABASE: DrugInstruction[] = [
       'تناوله عند الإفطار أو السحور',
       'لا حاجة لتعديلات خاصة',
     ],
+    standardDosages: ['400mcg', '800mcg', '1mg', '5mg'],
   },
 ];
 

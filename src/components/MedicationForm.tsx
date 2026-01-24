@@ -43,8 +43,18 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
     // Arabic units
     'ملغ', 'غ', 'مل', 'قرص', 'أقراص', 'كبسولة', 'كبسولات', 'قطرة', 'قطرات', 'وحدة', 'وحدات'];
   
+  // Normalize dosage for flexible matching
+  const normalizeDosage = (dosage: string): string => {
+    return dosage
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\s*(tablet|tablets|capsule|capsules|pill|pills|قرص|أقراص|كبسولة|كبسولات)\s*/gi, '')
+      .trim();
+  };
+  
   // Validate dosage function
-  const validateDosage = (value: string): string | null => {
+  const validateDosage = (value: string, drug: DrugInstruction | null): string | null => {
     if (!value.trim()) return null;
     
     const trimmedValue = value.trim().toLowerCase();
@@ -87,6 +97,58 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
         : 'Dosage cannot be zero';
     }
     
+    // Check against drug-specific standard dosages if drug is selected
+    if (drug && drug.standardDosages && drug.standardDosages.length > 0) {
+      const normalizedInput = normalizeDosage(value);
+      const normalizedStandards = drug.standardDosages.map(d => normalizeDosage(d));
+      
+      // Check if input matches any standard dosage
+      const matches = normalizedStandards.some(standard => {
+        // Exact match
+        if (normalizedInput === standard) return true;
+        
+        // Check if they contain the same numeric value and unit
+        const inputMatch = normalizedInput.match(/(\d+\.?\d*)\s*([a-z\u0600-\u06FF]+)?/i);
+        const standardMatch = standard.match(/(\d+\.?\d*)\s*([a-z\u0600-\u06FF]+)?/i);
+        
+        if (inputMatch && standardMatch) {
+          const inputNum = parseFloat(inputMatch[1]);
+          const standardNum = parseFloat(standardMatch[1]);
+          const inputUnit = inputMatch[2]?.toLowerCase() || '';
+          const standardUnit = standardMatch[2]?.toLowerCase() || '';
+          
+          // If numbers match and units match (or both missing), consider it a match
+          if (inputNum === standardNum) {
+            if (!inputUnit && !standardUnit) return true;
+            if (inputUnit && standardUnit && inputUnit === standardUnit) return true;
+            // Handle unit variations (mg = ملغ, etc.)
+            const unitMap: Record<string, string[]> = {
+              'mg': ['mg', 'ملغ', 'ملجم'],
+              'g': ['g', 'غ', 'جرام'],
+              'mcg': ['mcg', 'مcg'],
+              'ml': ['ml', 'مل'],
+              'unit': ['unit', 'units', 'وحدة', 'وحدات'],
+            };
+            for (const [key, variants] of Object.entries(unitMap)) {
+              if (variants.includes(inputUnit) && variants.includes(standardUnit)) {
+                return true;
+              }
+            }
+          }
+        }
+        
+        return false;
+      });
+      
+      if (!matches) {
+        const drugName = isArabic ? drug.nameAr : drug.name;
+        const dosagesList = drug.standardDosages.join(', ');
+        return isArabic
+          ? `${value} ليست جرعة قياسية لـ ${drugName}. الجرعات الشائعة: ${dosagesList}`
+          : `${value} is not a standard dosage for ${drugName}. Common dosages: ${dosagesList}`;
+      }
+    }
+    
     return null;
   };
   
@@ -117,7 +179,7 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
   useEffect(() => {
     const timer = setTimeout(() => {
       if (dosage) {
-        const warning = validateDosage(dosage);
+        const warning = validateDosage(dosage, selectedDrug);
         setDosageWarning(warning);
       } else {
         setDosageWarning(null);
@@ -125,7 +187,7 @@ export function MedicationForm({ initialData, onSubmit, onCancel, isLoading }: M
     }, 500); // 500ms debounce
     
     return () => clearTimeout(timer);
-  }, [dosage, isArabic]);
+  }, [dosage, selectedDrug, isArabic]);
   
   // Handle selecting a drug from suggestions
   const handleSelectDrug = (drug: DrugInstruction) => {
