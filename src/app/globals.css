@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #1a472a;
+  --primary-light: #2d6a4f;
+  --primary-dark: #0d2818;
+  --secondary: #d4af37;
+  --secondary-light: #e5c158;
+  --iftar-glow: #f9a825;
+  --suhoor-cool: #4fc3f7;
+  --success: #388e3c;
+  --warning: #f57c00;
+  --error: #d32f2f;
+}
+
+body {
+  font-family: var(--font-inter), 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* RTL Support */
+[dir="rtl"] body {
+  font-family: var(--font-arabic), 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Flip icons for RTL */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* RTL-aware spacing */
+[dir="rtl"] .rtl-space-x-reverse > * + * {
+  margin-right: var(--tw-space-x);
+  margin-left: 0;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* RTL-aware border radius for cards */
+[dir="rtl"] .border-l-4 {
+  border-left-width: 0;
+  border-right-width: 4px;
+}
+
+[dir="rtl"] .border-l-green-500 {
+  border-left-color: transparent;
+  border-right-color: rgb(34 197 94);
+}
+
+[dir="rtl"] .border-l-red-500 {
+  border-left-color: transparent;
+  border-right-color: rgb(239 68 68);
+}
+
+[dir="rtl"] .border-l-gray-400 {
+  border-left-color: transparent;
+  border-right-color: rgb(156 163 175);
+}
+
+[dir="rtl"] .border-l-amber-500 {
+  border-left-color: transparent;
+  border-right-color: rgb(245 158 11);
+}
+
+[dir="rtl"] .border-l-emerald-600 {
+  border-left-color: transparent;
+  border-right-color: rgb(5 150 105);
+}
+
+[dir="rtl"] .border-l-gray-300 {
+  border-left-color: transparent;
+  border-right-color: rgb(209 213 219);
+}
+
+[dir="rtl"] .border-l-cyan-500 {
+  border-left-color: transparent;
+  border-right-color: rgb(6 182 212);
+}
+
+/* Arabic text improvements */
+[dir="rtl"] {
+  letter-spacing: 0;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea {
+  text-align: right;
+}
+
+[dir="rtl"] input::placeholder,
+[dir="rtl"] textarea::placeholder {
+  text-align: right;
+}
