@@ -18,6 +18,13 @@ import {
 } from 'lucide-react';
 import { searchLocation, GeocodingResult } from '@/lib/geocoding';
 import { CalculationMethod } from '@/types';
+import {
+  isNotificationSupported,
+  getNotificationPermission,
+  requestNotificationPermission,
+  showTestNotification,
+  NotificationPermissionStatus,
+} from '@/lib/notifications';
 
 export default function SettingsPage() {
   const { t, isRTL } = useTranslation();
@@ -49,7 +56,16 @@ export default function SettingsPage() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermissionStatus>('default');
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Check notification permission on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setNotificationPermission(getNotificationPermission());
+    }
+  }, []);
 
   // Initialize search query with current location if available
   useEffect(() => {
@@ -167,6 +183,50 @@ export default function SettingsPage() {
     resetSettings();
     clearMedications();
     setShowClearConfirm(false);
+  };
+
+  const handleToggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      // Enabling notifications - request permission first
+      if (!isNotificationSupported()) {
+        alert(language === 'ar' 
+          ? 'متصفحك لا يدعم الإشعارات' 
+          : 'Your browser does not support notifications');
+        return;
+      }
+
+      if (notificationPermission === 'denied') {
+        alert(language === 'ar'
+          ? 'تم حظر الإشعارات. يرجى تمكينها من إعدادات المتصفح.'
+          : 'Notifications are blocked. Please enable them in your browser settings.');
+        return;
+      }
+
+      setIsRequestingPermission(true);
+      const permission = await requestNotificationPermission();
+      setNotificationPermission(permission);
+      setIsRequestingPermission(false);
+
+      if (permission === 'granted') {
+        setNotificationsEnabled(true);
+      } else if (permission === 'denied') {
+        alert(language === 'ar'
+          ? 'تم رفض إذن الإشعارات'
+          : 'Notification permission was denied');
+      }
+    } else {
+      // Disabling notifications
+      setNotificationsEnabled(false);
+    }
+  };
+
+  const handleTestNotification = () => {
+    const notification = showTestNotification(language === 'ar');
+    if (!notification) {
+      alert(language === 'ar'
+        ? 'تعذر إرسال الإشعار. تأكد من تمكين الإشعارات.'
+        : 'Could not send notification. Make sure notifications are enabled.');
+    }
   };
 
   const getMethodLabel = (key: string): string => {
@@ -394,6 +454,27 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-4">
+            {/* Notification Permission Status */}
+            {notificationPermission === 'unsupported' && (
+              <div className={`p-3 bg-amber-50 rounded-lg border border-amber-200 ${isRTL ? 'text-right' : ''}`}>
+                <p className="text-sm text-amber-700">
+                  {language === 'ar' 
+                    ? '⚠️ متصفحك لا يدعم الإشعارات'
+                    : '⚠️ Your browser does not support notifications'}
+                </p>
+              </div>
+            )}
+
+            {notificationPermission === 'denied' && (
+              <div className={`p-3 bg-red-50 rounded-lg border border-red-200 ${isRTL ? 'text-right' : ''}`}>
+                <p className="text-sm text-red-700">
+                  {language === 'ar'
+                    ? '🚫 تم حظر الإشعارات. يرجى تمكينها من إعدادات المتصفح.'
+                    : '🚫 Notifications are blocked. Please enable them in browser settings.'}
+                </p>
+              </div>
+            )}
+
             {/* Enable Notifications Toggle */}
             <div className={`flex items-center justify-between p-3 bg-gray-50 rounded-lg ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className={isRTL ? 'text-right' : ''}>
@@ -401,21 +482,45 @@ export default function SettingsPage() {
                 <p className="text-xs text-gray-500">{t.settings.receiveReminders}</p>
               </div>
               <button
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
+                onClick={handleToggleNotifications}
+                disabled={isRequestingPermission || notificationPermission === 'unsupported'}
+                className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 ${
                   notificationsEnabled ? 'bg-emerald-500' : 'bg-gray-300'
                 }`}
               >
-                <span
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    notificationsEnabled ? (isRTL ? 'left-1' : 'right-1') : (isRTL ? 'right-1' : 'left-1')
-                  }`}
-                />
+                {isRequestingPermission ? (
+                  <Loader2 className="w-4 h-4 absolute top-1 left-4 animate-spin text-gray-600" />
+                ) : (
+                  <span
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                      notificationsEnabled ? (isRTL ? 'left-1' : 'right-1') : (isRTL ? 'right-1' : 'left-1')
+                    }`}
+                  />
+                )}
               </button>
             </div>
 
             {notificationsEnabled && (
               <>
+                {/* Permission Status Badge */}
+                {notificationPermission === 'granted' && (
+                  <div className={`p-3 bg-emerald-50 rounded-lg ${isRTL ? 'text-right' : ''}`}>
+                    <p className="text-sm text-emerald-700 flex items-center gap-2">
+                      <Check className="w-4 h-4" />
+                      {language === 'ar' ? 'الإشعارات مفعّلة' : 'Notifications enabled'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Test Notification Button */}
+                <button
+                  onClick={handleTestNotification}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
+                >
+                  <Bell className="w-5 h-5" />
+                  {language === 'ar' ? 'اختبار الإشعارات' : 'Test Notification'}
+                </button>
+
                 {/* Pre-dose Alert */}
                 <div className={`p-3 bg-gray-50 rounded-lg ${isRTL ? 'text-right' : ''}`}>
                   <label className="block font-medium text-gray-800 mb-2">
