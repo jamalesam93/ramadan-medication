@@ -1,2 +1,3 @@
-export { en, type Translations } from './en';
-export { ar } from './ar';
+export * from './en';
+export * from './ar';
+export * from './fr';

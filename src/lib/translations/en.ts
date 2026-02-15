@@ -207,6 +207,14 @@ export const en = {
     language: 'Language',
     languageDesc: 'Choose your preferred language',
     
+    // Data Management
+    dataManagement: 'Data Management',
+    dataManagementDesc: 'Export and import your data',
+    exportData: 'Export Data',
+    importData: 'Import Data',
+    importSuccess: 'Data imported successfully',
+    importError: 'Failed to import data',
+
     // Clear Data
     clearAllData: 'Clear All Data',
     clearAllDataDesc: 'Remove all medications and settings',
