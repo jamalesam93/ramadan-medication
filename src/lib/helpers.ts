@@ -1,14 +1,27 @@
 export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
-export function formatTime12h(time: string, isArabic: boolean = false): string {
+function parseTime(time: string): { hours: number; minutes: number } {
   const [hours, minutes] = time.split(':').map(Number);
+  return { hours, minutes };
+}
+
+function formatTo12h(hours: number, minutes: number, isArabic: boolean = false): string {
   const period = hours >= 12 
     ? (isArabic ? 'مساءً' : 'PM') 
     : (isArabic ? 'صباحاً' : 'AM');
   const displayHours = hours % 12 || 12;
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
+function formatTo24h(hours: number, minutes: number): string {
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+export function formatTime12h(time: string, isArabic: boolean = false): string {
+  const { hours, minutes } = parseTime(time);
+  return formatTo12h(hours, minutes, isArabic);
 }
 
 export function getCurrentDate(): string {
@@ -17,11 +30,11 @@ export function getCurrentDate(): string {
 
 export function getCurrentTime(): string {
   const now = new Date();
-  return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  return formatTo24h(now.getHours(), now.getMinutes());
 }
 
 export function parseTimeToDate(time: string, date?: string): Date {
-  const [hours, minutes] = time.split(':').map(Number);
+  const { hours, minutes } = parseTime(time);
   const targetDate = date ? new Date(date) : new Date();
   targetDate.setHours(hours, minutes, 0, 0);
   return targetDate;
@@ -30,7 +43,7 @@ export function parseTimeToDate(time: string, date?: string): Date {
 export function addMinutesToTime(time: string, minutes: number): string {
   const date = parseTimeToDate(time);
   date.setMinutes(date.getMinutes() + minutes);
-  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  return formatTo24h(date.getHours(), date.getMinutes());
 }
 
 export function subtractMinutesFromTime(time: string, minutes: number): string {
@@ -38,7 +51,7 @@ export function subtractMinutesFromTime(time: string, minutes: number): string {
 }
 
 export function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
+  const { hours, minutes } = parseTime(time);
   return hours * 60 + minutes;
 }
 
@@ -46,7 +59,7 @@ export function minutesToTime(totalMinutes: number): string {
   const normalizedMinutes = ((totalMinutes % 1440) + 1440) % 1440;
   const hours = Math.floor(normalizedMinutes / 60);
   const minutes = normalizedMinutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return formatTo24h(hours, minutes);
 }
 
 export function getTimeRemaining(targetTime: string): {
@@ -76,13 +89,7 @@ export function getTimeRemaining(targetTime: string): {
 }
 
 export function formatTime(date: Date, isArabic: boolean = false): string {
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const period = hours >= 12 
-    ? (isArabic ? 'مساءً' : 'PM') 
-    : (isArabic ? 'صباحاً' : 'AM');
-  const displayHours = hours % 12 || 12;
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  return formatTo12h(date.getHours(), date.getMinutes(), isArabic);
 }
 
 export function formatCountdown(hours: number, minutes: number, seconds: number): string {
