@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS = {
   notificationsEnabled: true,
   location: null,
   isRamadanMode: true,
+  timeFormat: '12h' as const,
 };
 
 export const PILL_COLORS: Record<PillColor, { name: string; hex: string; tailwind: string }> = {

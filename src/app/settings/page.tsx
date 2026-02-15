@@ -17,6 +17,7 @@ import {
   Search,
   Download,
   Upload,
+  Clock,
 } from 'lucide-react';
 import { searchLocation, GeocodingResult } from '@/lib/geocoding';
 import { CalculationMethod } from '@/types';
@@ -45,6 +46,8 @@ export default function SettingsPage() {
     setSuhoorAlertMinutes,
     isRamadanMode,
     setIsRamadanMode,
+    timeFormat,
+    setTimeFormat,
     resetSettings,
   } = useSettingsStore();
   const { clearMedications } = useMedicationStore();
@@ -649,6 +652,46 @@ export default function SettingsPage() {
                 className="hidden"
               />
             </label>
+          </div>
+        </div>
+
+        {/* Time Format */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <Clock className="w-5 h-5 text-emerald-600" />
+            <div className={isRTL ? 'text-right' : ''}>
+              <h2 className="font-semibold text-gray-800">{t.settings.timeFormat}</h2>
+              <p className="text-sm text-gray-500">{t.settings.timeFormatDesc}</p>
+            </div>
+          </div>
+
+          <div className={`grid grid-cols-2 gap-3 ${isRTL ? 'direction-rtl' : ''}`}>
+            <button
+              onClick={() => setTimeFormat('12h')}
+              className={`p-4 rounded-lg border-2 text-center transition-all ${
+                timeFormat === '12h'
+                  ? 'border-emerald-500 bg-emerald-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <span className="block font-medium text-gray-800">{t.settings.timeFormat12h}</span>
+              {timeFormat === '12h' && (
+                <Check className="w-4 h-4 text-emerald-600 mx-auto mt-1" />
+              )}
+            </button>
+            <button
+              onClick={() => setTimeFormat('24h')}
+              className={`p-4 rounded-lg border-2 text-center transition-all ${
+                timeFormat === '24h'
+                  ? 'border-emerald-500 bg-emerald-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <span className="block font-medium text-gray-800">{t.settings.timeFormat24h}</span>
+              {timeFormat === '24h' && (
+                <Check className="w-4 h-4 text-emerald-600 mx-auto mt-1" />
+              )}
+            </button>
           </div>
         </div>
 

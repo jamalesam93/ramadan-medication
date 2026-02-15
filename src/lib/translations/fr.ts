@@ -217,6 +217,12 @@ export const fr: Translations = {
     importSuccess: 'Données importées avec succès',
     importError: "Échec de l'importation des données",
 
+    // Time Format
+    timeFormat: "Format de l'heure",
+    timeFormatDesc: "Choisir l'affichage 12h ou 24h",
+    timeFormat12h: '12 heures',
+    timeFormat24h: '24 heures',
+
     // Clear Data
     clearAllData: 'Effacer toutes les données',
     clearAllDataDesc: 'Supprimer tous les médicaments et paramètres',

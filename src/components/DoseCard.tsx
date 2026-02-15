@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from '@/contexts/LanguageContext';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { Check, X, Clock, AlertCircle, Pill } from 'lucide-react';
 import { ScheduledDose, Medication } from '@/types';
 import { formatTime12h, formatTime } from '@/lib/helpers';
@@ -16,6 +17,7 @@ interface DoseCardProps {
 
 export function DoseCard({ dose, medication, onMarkTaken, onSkip, isNext }: DoseCardProps) {
   const { t, isRTL } = useTranslation();
+  const { timeFormat } = useSettingsStore();
   const scheduledTime = new Date(dose.scheduledTime);
   const now = new Date();
   const isPast = scheduledTime < now && dose.status === 'pending';
@@ -85,7 +87,7 @@ export function DoseCard({ dose, medication, onMarkTaken, onSkip, isNext }: Dose
           <div className={`flex items-center gap-2 text-sm ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
             <Clock className="w-4 h-4 text-gray-400" />
             <span className={isPast && dose.status === 'pending' ? 'text-amber-600 font-medium' : 'text-gray-500'}>
-              {formatTime(scheduledTime, isRTL)}
+              {formatTime(scheduledTime, isRTL, timeFormat)}
               {isPast && dose.status === 'pending' && ` (${t.doseStatus.overdue})`}
             </span>
           </div>

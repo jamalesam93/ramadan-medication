@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { AppSettings, Location, CalculationMethod } from '@/types';
+import { AppSettings, Location, CalculationMethod, TimeFormat } from '@/types';
 import { DEFAULT_SETTINGS } from '@/lib/constants';
 
 interface SettingsState extends AppSettings {
@@ -12,6 +12,7 @@ interface SettingsState extends AppSettings {
   setNotificationsEnabled: (enabled: boolean) => void;
   setLocation: (location: Location | null) => void;
   setIsRamadanMode: (enabled: boolean) => void;
+  setTimeFormat: (format: TimeFormat) => void;
   resetSettings: () => void;
 }
 
@@ -26,6 +27,7 @@ export const useSettingsStore = create<SettingsState>()(
       setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
       setLocation: (location) => set({ location }),
       setIsRamadanMode: (enabled) => set({ isRamadanMode: enabled }),
+      setTimeFormat: (format) => set({ timeFormat: format }),
       resetSettings: () => set({ ...DEFAULT_SETTINGS }),
     }),
     {

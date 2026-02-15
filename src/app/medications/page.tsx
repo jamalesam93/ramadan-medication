@@ -5,7 +5,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { useMedicationStore } from '@/stores/medicationStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { fetchPrayerTimes } from '@/lib/prayerTimes';
-import { mapMedicationToRamadanSchedule } from '@/lib/doseMapper';
+import { mapMedicationToRamadanSchedule, mapMedicationToStandardSchedule } from '@/lib/doseMapper';
 import { parseTimeToDate, formatTime } from '@/lib/helpers';
 import { Modal, MedicationForm } from '@/components';
 import { Medication, PrayerTimes } from '@/types';
@@ -15,7 +15,7 @@ import { Plus, Pill, Edit2, Trash2, Clock, AlertTriangle } from 'lucide-react';
 export default function MedicationsPage() {
   const { t, isRTL } = useTranslation();
   const { medications, loadMedications, addMedication, updateMedication, deleteMedication } = useMedicationStore();
-  const { location } = useSettingsStore();
+  const { location, isRamadanMode, timeFormat } = useSettingsStore();
   const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
@@ -28,7 +28,11 @@ export default function MedicationsPage() {
 
   useEffect(() => {
     const loadPrayerTimes = async () => {
-      if (!location) return;
+      // Only fetch prayer times if Ramadan mode is enabled and location is set
+      if (!isRamadanMode || !location) {
+        setPrayerTimes(null);
+        return;
+      }
       try {
         const times = await fetchPrayerTimes(location.latitude, location.longitude);
         setPrayerTimes(times);
@@ -37,7 +41,7 @@ export default function MedicationsPage() {
       }
     };
     loadPrayerTimes();
-  }, [location]);
+  }, [location, isRamadanMode]);
 
   const handleAddMedication = async (data: Omit<Medication, 'id' | 'createdAt' | 'updatedAt'>) => {
     setIsLoading(true);
@@ -72,8 +76,12 @@ export default function MedicationsPage() {
   };
 
   const getScheduledTimes = (medication: Medication): Date[] => {
-    if (!prayerTimes) return [];
-    const mapping = mapMedicationToRamadanSchedule(medication, prayerTimes);
+    let mapping;
+    if (isRamadanMode && prayerTimes) {
+      mapping = mapMedicationToRamadanSchedule(medication, prayerTimes);
+    } else {
+      mapping = mapMedicationToStandardSchedule(medication);
+    }
     return mapping.times.map(time => parseTimeToDate(time));
   };
 
@@ -165,7 +173,7 @@ export default function MedicationsPage() {
                                 className={`inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded ${isRTL ? 'flex-row-reverse' : ''}`}
                               >
                                 <Clock className="w-3 h-3" />
-                                {formatTime(time, isRTL)}
+                                {formatTime(time, isRTL, timeFormat)}
                               </span>
                             ))}
                           </div>

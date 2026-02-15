@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation, useLanguage } from '@/contexts/LanguageContext';
 import { useMedicationStore } from '@/stores/medicationStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { ChevronLeft, ChevronRight, Check, X, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/helpers';
 
@@ -10,6 +11,7 @@ export default function CalendarPage() {
   const { t, isRTL } = useTranslation();
   const { language } = useLanguage();
   const { medications, doses, loadMedications, loadDoses } = useMedicationStore();
+  const { timeFormat } = useSettingsStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
@@ -262,7 +264,7 @@ export default function CalendarPage() {
                           </div>
                         </div>
                         <span className="text-sm text-gray-600">
-                          {formatTime(new Date(dose.scheduledTime), isRTL)}
+                          {formatTime(new Date(dose.scheduledTime), isRTL, timeFormat)}
                         </span>
                       </div>
                     );

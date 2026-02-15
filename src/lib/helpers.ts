@@ -19,7 +19,10 @@ function formatTo24h(hours: number, minutes: number): string {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
 
-export function formatTime12h(time: string, isArabic: boolean = false): string {
+export function formatTime12h(time: string, isArabic: boolean = false, timeFormat: '12h' | '24h' = '12h'): string {
+  if (timeFormat === '24h') {
+    return time; // Already in 24h format
+  }
   const { hours, minutes } = parseTime(time);
   return formatTo12h(hours, minutes, isArabic);
 }
@@ -88,8 +91,13 @@ export function getTimeRemaining(targetTime: string): {
   return { hours, minutes, seconds, totalSeconds, isOverdue };
 }
 
-export function formatTime(date: Date, isArabic: boolean = false): string {
-  return formatTo12h(date.getHours(), date.getMinutes(), isArabic);
+export function formatTime(date: Date, isArabic: boolean = false, timeFormat: '12h' | '24h' = '12h'): string {
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  if (timeFormat === '24h') {
+    return formatTo24h(hours, minutes);
+  }
+  return formatTo12h(hours, minutes, isArabic);
 }
 
 export function formatCountdown(hours: number, minutes: number, seconds: number): string {

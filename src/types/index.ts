@@ -60,6 +60,8 @@ export type CalculationMethod =
   | 'Tehran'
   | 'Turkey';
 
+export type TimeFormat = '12h' | '24h';
+
 export interface AppSettings {
   calculationMethod: CalculationMethod;
   preAlertMinutes: number;
@@ -67,6 +69,7 @@ export interface AppSettings {
   notificationsEnabled: boolean;
   location: Location | null;
   isRamadanMode: boolean;
+  timeFormat: TimeFormat;
 }
 
 export interface TodaySchedule {

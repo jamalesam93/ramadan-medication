@@ -217,6 +217,12 @@ export const ar: Translations = {
     importSuccess: 'تم استيراد البيانات بنجاح',
     importError: 'فشل استيراد البيانات',
 
+    // Time Format
+    timeFormat: 'تنسيق الوقت',
+    timeFormatDesc: 'اختر عرض 12 ساعة أو 24 ساعة',
+    timeFormat12h: '12 ساعة',
+    timeFormat24h: '24 ساعة',
+    
     // Clear Data
     clearAllData: 'حذف جميع البيانات',
     clearAllDataDesc: 'إزالة جميع الأدوية والإعدادات',

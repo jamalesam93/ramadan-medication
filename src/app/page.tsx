@@ -15,7 +15,7 @@ import Link from 'next/link';
 export default function Home() {
   const { t, isRTL } = useTranslation();
   const { medications, doses, setDoses, updateDoseStatus, loadMedications, loadDoses } = useMedicationStore();
-  const { location } = useSettingsStore();
+  const { location, isRamadanMode } = useSettingsStore();
   const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -27,7 +27,8 @@ export default function Home() {
 
   useEffect(() => {
     const loadPrayerTimes = async () => {
-      if (!location) {
+      // Only fetch prayer times if Ramadan mode is enabled and location is set
+      if (!isRamadanMode || !location) {
         setIsLoading(false);
         return;
       }
@@ -46,11 +47,14 @@ export default function Home() {
     };
 
     loadPrayerTimes();
-  }, [location]);
+  }, [location, isRamadanMode]);
 
   // Generate scheduled doses when prayer times and medications are available
   useEffect(() => {
-    if (!prayerTimes || medications.length === 0) return;
+    if (medications.length === 0) return;
+    
+    // Only require prayer times if Ramadan mode is enabled
+    if (isRamadanMode && !prayerTimes) return;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -65,7 +69,7 @@ export default function Home() {
     if (existingTodaysDoses.length === 0) {
       const newDoses: ScheduledDose[] = [];
       medications.forEach((med) => {
-        const generatedDoses = generateDosesForDate(med, prayerTimes, todayStr);
+        const generatedDoses = generateDosesForDate(med, prayerTimes, todayStr, isRamadanMode);
         
         generatedDoses.forEach((dose, index) => {
           newDoses.push({
@@ -79,7 +83,7 @@ export default function Home() {
         setDoses(newDoses);
       }
     }
-  }, [prayerTimes, medications, doses, setDoses]);
+  }, [prayerTimes, medications, doses, setDoses, isRamadanMode]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -142,7 +146,8 @@ export default function Home() {
     nextDose ? new Date(nextDose.scheduledTime) : null
   , [nextDose]);
 
-  if (!location) {
+  // Only require location if Ramadan mode is enabled
+  if (isRamadanMode && !location) {
     return (
       <div className="min-h-screen p-6">
         <div className="max-w-2xl mx-auto">

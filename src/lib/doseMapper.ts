@@ -157,12 +157,114 @@ function mapFourTimesDailyDose(
   };
 }
 
+// Non-Ramadan scheduling function
+export function mapMedicationToStandardSchedule(
+  medication: Medication
+): DoseMapping {
+  const warnings: string[] = [];
+  let times: string[] = [];
+  
+  switch (medication.frequency) {
+    case 'once':
+      times = mapOnceDailyStandard(medication.timePreference);
+      break;
+    case 'twice':
+      times = mapTwiceDailyStandard(medication.timePreference, medication.withFood);
+      break;
+    case 'thrice':
+      times = mapThriceDailyStandard(medication.timePreference, medication.withFood);
+      break;
+    case 'four_times':
+      times = mapFourTimesDailyStandard(medication.timePreference, medication.withFood);
+      break;
+    case 'custom':
+      if (medication.customTimes && medication.customTimes.length > 0) {
+        times = medication.customTimes;
+      }
+      break;
+  }
+  
+  if (medication.withFood && times.length > 0) {
+    warnings.push('This medication should be taken with food.');
+  }
+  
+  return { times, warnings };
+}
+
+// Standard scheduling functions
+function mapOnceDailyStandard(timePreference: TimePreference): string[] {
+  switch (timePreference) {
+    case 'morning':
+      return ['08:00'];
+    case 'evening':
+      return ['20:00'];
+    case 'with_food':
+      return ['12:00'];
+    case 'empty_stomach':
+      return ['07:00'];
+    case 'any':
+    default:
+      return ['09:00'];
+  }
+}
+
+function mapTwiceDailyStandard(timePreference: TimePreference, withFood: boolean): string[] {
+  if (withFood || timePreference === 'with_food') {
+    return ['08:00', '20:00'];
+  }
+  
+  if (timePreference === 'empty_stomach') {
+    return ['07:00', '19:00'];
+  }
+  
+  if (timePreference === 'morning') {
+    return ['08:00', '14:00'];
+  }
+  
+  if (timePreference === 'evening') {
+    return ['14:00', '20:00'];
+  }
+  
+  return ['09:00', '21:00'];
+}
+
+function mapThriceDailyStandard(timePreference: TimePreference, withFood: boolean): string[] {
+  if (withFood || timePreference === 'with_food') {
+    return ['08:00', '14:00', '20:00'];
+  }
+  
+  if (timePreference === 'empty_stomach') {
+    return ['07:00', '13:00', '19:00'];
+  }
+  
+  return ['08:00', '14:00', '20:00'];
+}
+
+function mapFourTimesDailyStandard(timePreference: TimePreference, withFood: boolean): string[] {
+  if (withFood || timePreference === 'with_food') {
+    return ['08:00', '12:00', '16:00', '20:00'];
+  }
+  
+  if (timePreference === 'empty_stomach') {
+    return ['07:00', '11:00', '15:00', '19:00'];
+  }
+  
+  return ['08:00', '12:00', '16:00', '20:00'];
+}
+
 export function generateDosesForDate(
   medication: Medication,
-  prayerTimes: PrayerTimes,
-  date: string
+  prayerTimes: PrayerTimes | null,
+  date: string,
+  isRamadanMode: boolean = true
 ): Omit<ScheduledDose, 'id'>[] {
-  const mapping = mapMedicationToRamadanSchedule(medication, prayerTimes);
+  let mapping: DoseMapping;
+  
+  if (isRamadanMode && prayerTimes) {
+    mapping = mapMedicationToRamadanSchedule(medication, prayerTimes);
+  } else {
+    mapping = mapMedicationToStandardSchedule(medication);
+  }
   
   return mapping.times.map(time => ({
     medicationId: medication.id,
@@ -174,13 +276,14 @@ export function generateDosesForDate(
 
 export function generateAllDosesForDate(
   medications: Medication[],
-  prayerTimes: PrayerTimes,
-  date: string
+  prayerTimes: PrayerTimes | null,
+  date: string,
+  isRamadanMode: boolean = true
 ): Omit<ScheduledDose, 'id'>[] {
   const allDoses: Omit<ScheduledDose, 'id'>[] = [];
   
   for (const medication of medications) {
-    const doses = generateDosesForDate(medication, prayerTimes, date);
+    const doses = generateDosesForDate(medication, prayerTimes, date, isRamadanMode);
     allDoses.push(...doses);
   }
   
@@ -191,8 +294,16 @@ export function generateAllDosesForDate(
 
 export function getMedicationWarnings(
   medication: Medication,
-  prayerTimes: PrayerTimes
+  prayerTimes: PrayerTimes | null,
+  isRamadanMode: boolean = true
 ): string[] {
-  const mapping = mapMedicationToRamadanSchedule(medication, prayerTimes);
+  let mapping: DoseMapping;
+  
+  if (isRamadanMode && prayerTimes) {
+    mapping = mapMedicationToRamadanSchedule(medication, prayerTimes);
+  } else {
+    mapping = mapMedicationToStandardSchedule(medication);
+  }
+  
   return mapping.warnings;
 }

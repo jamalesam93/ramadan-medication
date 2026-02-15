@@ -39,7 +39,7 @@ interface MedicationState {
   updateDoseStatus: (doseId: string, status: DoseStatus) => Promise<void>;
   loadTodaysDoses: () => Promise<void>;
   loadDosesForDate: (date: string) => Promise<ScheduledDose[]>;
-  generateDoses: (date: string, prayerTimes: PrayerTimes) => Promise<void>;
+  generateDoses: (date: string, prayerTimes: PrayerTimes | null, isRamadanMode?: boolean) => Promise<void>;
   
   // Prayer times
   setPrayerTimes: (prayerTimes: PrayerTimes | null) => void;
@@ -135,7 +135,7 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
     return await getDosesByDate(date);
   },
 
-  generateDoses: async (date, prayerTimes) => {
+  generateDoses: async (date, prayerTimes, isRamadanMode = true) => {
     set({ isLoading: true });
     
     const { medications } = get();
@@ -144,7 +144,7 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
       await deleteDosesByDate(date);
     }
     
-    const dosesToCreate = generateAllDosesForDate(medications, prayerTimes, date);
+    const dosesToCreate = generateAllDosesForDate(medications, prayerTimes, date, isRamadanMode);
     
     const createdDoses: ScheduledDose[] = [];
     for (const doseData of dosesToCreate) {

@@ -215,6 +215,12 @@ export const en = {
     importSuccess: 'Data imported successfully',
     importError: 'Failed to import data',
 
+    // Time Format
+    timeFormat: 'Time Format',
+    timeFormatDesc: 'Choose 12-hour or 24-hour display',
+    timeFormat12h: '12-hour',
+    timeFormat24h: '24-hour',
+    
     // Clear Data
     clearAllData: 'Clear All Data',
     clearAllDataDesc: 'Remove all medications and settings',
