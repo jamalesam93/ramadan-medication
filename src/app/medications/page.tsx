@@ -4,19 +4,17 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useMedicationStore } from '@/stores/medicationStore';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { fetchPrayerTimes } from '@/lib/prayerTimes';
 import { mapMedicationToRamadanSchedule, mapMedicationToStandardSchedule } from '@/lib/doseMapper';
 import { parseTimeToDate, formatTime } from '@/lib/helpers';
 import { Modal, MedicationForm } from '@/components';
-import { Medication, PrayerTimes } from '@/types';
+import { Medication } from '@/types';
 import { PILL_COLORS_ARRAY as PILL_COLORS } from '@/lib/constants';
 import { Plus, Pill, Edit2, Trash2, Clock, AlertTriangle } from 'lucide-react';
 
 export default function MedicationsPage() {
   const { t, isRTL } = useTranslation();
-  const { medications, loadMedications, addMedication, updateMedication, deleteMedication } = useMedicationStore();
-  const { location, isRamadanMode, timeFormat } = useSettingsStore();
-  const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
+  const { medications, prayerTimes, loadMedications, addMedication, updateMedication, deleteMedication } = useMedicationStore();
+  const { isRamadanMode, timeFormat } = useSettingsStore();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [deletingMedication, setDeletingMedication] = useState<Medication | null>(null);
@@ -25,23 +23,6 @@ export default function MedicationsPage() {
   useEffect(() => {
     loadMedications();
   }, [loadMedications]);
-
-  useEffect(() => {
-    const loadPrayerTimes = async () => {
-      // Only fetch prayer times if Ramadan mode is enabled and location is set
-      if (!isRamadanMode || !location) {
-        setPrayerTimes(null);
-        return;
-      }
-      try {
-        const times = await fetchPrayerTimes(location.latitude, location.longitude);
-        setPrayerTimes(times);
-      } catch (error) {
-        console.error('Error fetching prayer times:', error);
-      }
-    };
-    loadPrayerTimes();
-  }, [location, isRamadanMode]);
 
   const handleAddMedication = async (data: Omit<Medication, 'id' | 'createdAt' | 'updatedAt'>) => {
     setIsLoading(true);

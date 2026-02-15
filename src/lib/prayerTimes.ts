@@ -2,8 +2,36 @@ import type { PrayerTimes, Location, CalculationMethod } from '../types/index.ts
 import { ALADHAN_API_BASE, CALCULATION_METHODS } from './constants.ts';
 import { getCurrentDate } from './helpers.ts';
 
-// Simple in-memory cache to prevent redundant API calls
+const PRAYER_TIMES_STORAGE_PREFIX = 'ramadan_prayer_times_';
+
+// In-memory cache for current session
 const prayerTimesCache: Record<string, PrayerTimes> = {};
+
+function getStorageKey(lat: number, lng: number, method: CalculationMethod, date: string): string {
+  return `${PRAYER_TIMES_STORAGE_PREFIX}${lat.toFixed(4)}-${lng.toFixed(4)}-${method}-${date}`;
+}
+
+function getPersistedPrayerTimes(key: string): PrayerTimes | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as PrayerTimes;
+    if (parsed?.maghrib && parsed?.fajr && parsed?.date) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setPersistedPrayerTimes(key: string, data: PrayerTimes): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch {
+    // Ignore storage errors (quota, private mode)
+  }
+}
 
 export async function fetchPrayerTimes(
   latitude: number,
@@ -15,11 +43,19 @@ export async function fetchPrayerTimes(
     const targetDate = date || getCurrentDate();
 
     // Create a cache key based on parameters
-    // Round coordinates to 4 decimal places to handle minor GPS fluctuations and increase cache hits
     const cacheKey = `${latitude.toFixed(4)}-${longitude.toFixed(4)}-${method}-${targetDate}`;
 
+    // 1. Check in-memory cache
     if (prayerTimesCache[cacheKey]) {
       return prayerTimesCache[cacheKey];
+    }
+
+    // 2. Check persisted cache (localStorage)
+    const storageKey = getStorageKey(latitude, longitude, method, targetDate);
+    const persisted = getPersistedPrayerTimes(storageKey);
+    if (persisted) {
+      prayerTimesCache[cacheKey] = persisted;
+      return persisted;
     }
 
     const [year, month, day] = targetDate.split('-');
@@ -55,8 +91,9 @@ export async function fetchPrayerTimes(
       date: targetDate,
     };
 
-    // Store in cache
+    // Store in memory and persist to disk for fast cold-start
     prayerTimesCache[cacheKey] = result;
+    setPersistedPrayerTimes(storageKey, result);
 
     return result;
   } catch (error) {

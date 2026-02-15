@@ -109,8 +109,11 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
   },
 
   setDoses: async (doses) => {
-    await saveDoses(doses);
+    // Optimistic: update UI immediately, persist in background
     set({ doses });
+    saveDoses(doses).catch((err) =>
+      console.error('Failed to persist doses:', err)
+    );
   },
 
   updateDoseStatus: async (doseId, status) => {

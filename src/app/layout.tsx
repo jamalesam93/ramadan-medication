@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ClientLayout } from "@/components/ClientLayout";
+import { PrayerTimesProvider } from "@/components/PrayerTimesProvider";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const inter = Inter({ 
@@ -35,9 +36,11 @@ export default function RootLayout({
       <body className={`${inter.variable} ${notoSansArabic.variable} bg-gray-50`}>
         <ServiceWorkerRegister />
         <LanguageProvider>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
+          <PrayerTimesProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </PrayerTimesProvider>
         </LanguageProvider>
       </body>
     </html>

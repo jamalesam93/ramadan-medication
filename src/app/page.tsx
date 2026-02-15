@@ -7,47 +7,24 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { fetchPrayerTimes } from '@/lib/prayerTimes';
 import { generateDosesForDate } from '@/lib/doseMapper';
 import { getCurrentDate } from '@/lib/helpers';
-import { PrayerTimeBar, DoseCard, CountdownTimer } from '@/components';
-import { PrayerTimes, ScheduledDose, Medication } from '@/types';
+import { PrayerTimeBar, DoseCard, CountdownTimer, ScheduleSkeleton } from '@/components';
+import { ScheduledDose, Medication } from '@/types';
 import { Pill, MapPin, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Home() {
   const { t, isRTL } = useTranslation();
-  const { medications, doses, setDoses, updateDoseStatus, loadMedications, loadDoses } = useMedicationStore();
+  const { medications, doses, setDoses, setPrayerTimes, updateDoseStatus, loadMedications, loadDoses, prayerTimes } = useMedicationStore();
   const { location, isRamadanMode } = useSettingsStore();
-  const [prayerTimes, setPrayerTimes] = useState<PrayerTimes | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Prayer times are fetched by PrayerTimesProvider (layout) - starts earlier
+  const isLoading = isRamadanMode && !!location && prayerTimes === null;
 
   useEffect(() => {
     loadMedications();
     loadDoses();
   }, [loadMedications, loadDoses]);
-
-  useEffect(() => {
-    const loadPrayerTimes = async () => {
-      // Only fetch prayer times if Ramadan mode is enabled and location is set
-      if (!isRamadanMode || !location) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const times = await fetchPrayerTimes(
-          location.latitude,
-          location.longitude
-        );
-        setPrayerTimes(times);
-      } catch (error) {
-        console.error('Error fetching prayer times:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadPrayerTimes();
-  }, [location, isRamadanMode]);
 
   // Generate scheduled doses when prayer times and medications are available
   useEffect(() => {
@@ -80,7 +57,10 @@ export default function Home() {
       });
 
       if (newDoses.length > 0) {
-        setDoses(newDoses);
+        // Merge with existing doses from other dates (don't replace)
+        const otherDoses = doses.filter((d) => d.date !== todayStr);
+        const mergedDoses = [...otherDoses, ...newDoses];
+        setDoses(mergedDoses);
       }
     }
   }, [prayerTimes, medications, doses, setDoses, isRamadanMode]);
@@ -88,12 +68,12 @@ export default function Home() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      if (location) {
+      if (location && isRamadanMode) {
         const times = await fetchPrayerTimes(
           location.latitude,
           location.longitude
         );
-        setPrayerTimes(times);
+        setPrayerTimes(times ?? null);
       }
       await loadMedications();
       await loadDoses();
@@ -233,8 +213,8 @@ export default function Home() {
               </Link>
             </div>
           ) : todaysDoses.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-xl">
-              <p className="text-gray-500">{t.common.loading}</p>
+            <div className="bg-gray-50 rounded-xl p-6">
+              <ScheduleSkeleton />
             </div>
           ) : (
             <div className="space-y-3">
