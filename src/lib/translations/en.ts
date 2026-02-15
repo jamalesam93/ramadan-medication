@@ -298,6 +298,13 @@ export const en = {
     november: 'November',
     december: 'December',
   },
+
+  // Not found
+  notFound: {
+    title: 'Page Not Found',
+    description: "The page you're looking for doesn't exist.",
+    goHome: 'Go to Home',
+  },
 };
 
 export type Translations = typeof en;

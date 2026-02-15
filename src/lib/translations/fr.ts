@@ -300,4 +300,11 @@ export const fr: Translations = {
     november: 'Novembre',
     december: 'Décembre',
   },
+
+  // Not found
+  notFound: {
+    title: 'Page introuvable',
+    description: "La page que vous recherchez n'existe pas.",
+    goHome: "Retour à l'accueil",
+  },
 };

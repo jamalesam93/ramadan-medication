@@ -300,4 +300,11 @@ export const ar: Translations = {
     november: 'نوفمبر',
     december: 'ديسمبر',
   },
+
+  // Not found
+  notFound: {
+    title: 'الصفحة غير موجودة',
+    description: 'الصفحة التي تبحث عنها غير موجودة.',
+    goHome: 'العودة للرئيسية',
+  },
 };
