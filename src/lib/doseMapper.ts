@@ -68,7 +68,7 @@ function mapOnceDailyDose(
   }
 }
 
-function mapTwiceDailyDose(
+export function mapTwiceDailyDose(
   timePreference: TimePreference,
   iftarTime: string,
   suhoorTime: string,
