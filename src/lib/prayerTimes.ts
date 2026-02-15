@@ -2,6 +2,9 @@ import { PrayerTimes, Location, CalculationMethod } from '@/types';
 import { ALADHAN_API_BASE, CALCULATION_METHODS } from './constants';
 import { getCurrentDate } from './helpers';
 
+// Simple in-memory cache to prevent redundant API calls
+const prayerTimesCache: Record<string, PrayerTimes> = {};
+
 export async function fetchPrayerTimes(
   latitude: number,
   longitude: number,
@@ -10,6 +13,15 @@ export async function fetchPrayerTimes(
 ): Promise<PrayerTimes | null> {
   try {
     const targetDate = date || getCurrentDate();
+
+    // Create a cache key based on parameters
+    // Round coordinates to 4 decimal places to handle minor GPS fluctuations and increase cache hits
+    const cacheKey = `${latitude.toFixed(4)}-${longitude.toFixed(4)}-${method}-${targetDate}`;
+
+    if (prayerTimesCache[cacheKey]) {
+      return prayerTimesCache[cacheKey];
+    }
+
     const [year, month, day] = targetDate.split('-');
     const methodValue = CALCULATION_METHODS[method].value;
     
@@ -33,7 +45,7 @@ export async function fetchPrayerTimes(
       return timeStr.split(' ')[0];
     };
     
-    return {
+    const result: PrayerTimes = {
       fajr: extractTime(timings.Fajr),
       sunrise: extractTime(timings.Sunrise),
       dhuhr: extractTime(timings.Dhuhr),
@@ -42,6 +54,11 @@ export async function fetchPrayerTimes(
       isha: extractTime(timings.Isha),
       date: targetDate,
     };
+
+    // Store in cache
+    prayerTimesCache[cacheKey] = result;
+
+    return result;
   } catch (error) {
     console.error('Error fetching prayer times:', error);
     return null;
