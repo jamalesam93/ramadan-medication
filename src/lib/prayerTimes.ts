@@ -53,6 +53,7 @@ function findCachedPrayerTimes(
         const lng = parseFloat(match[2]);
         if (Math.abs(lat - targetLat) < CACHE_DISTANCE_THRESHOLD &&
             Math.abs(lng - targetLng) < CACHE_DISTANCE_THRESHOLD) {
+          console.log('PrayerTimes: Fuzzy cache hit (memory)', { targetLat, targetLng, cachedLat: lat, cachedLng: lng });
           return prayerTimesCache[key];
         }
       }
@@ -77,6 +78,7 @@ function findCachedPrayerTimes(
               if (stored) {
                 const parsed = JSON.parse(stored) as PrayerTimes;
                 if (parsed?.maghrib && parsed?.fajr && parsed?.date) {
+                  console.log('PrayerTimes: Fuzzy cache hit (storage)', { targetLat, targetLng, cachedLat: lat, cachedLng: lng });
                   return parsed;
                 }
               }
@@ -98,6 +100,7 @@ export async function fetchPrayerTimes(
   method: CalculationMethod = 'MuslimWorldLeague',
   date?: string
 ): Promise<PrayerTimes | null> {
+  console.log('PrayerTimes: fetchPrayerTimes called', { latitude, longitude, method, date });
   try {
     const targetDate = date || getCurrentDate();
 
@@ -106,6 +109,7 @@ export async function fetchPrayerTimes(
 
     // 1. Try exact match first (fastest)
     if (prayerTimesCache[exactCacheKey]) {
+      console.log('PrayerTimes: Exact cache hit (memory)');
       return prayerTimesCache[exactCacheKey];
     }
 
@@ -130,8 +134,12 @@ export async function fetchPrayerTimes(
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
+        console.log(`PrayerTimes: Fetching API (attempt ${attempt + 1}/${maxRetries + 1})`, url);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        const timeoutId = setTimeout(() => {
+            console.warn(`PrayerTimes: Request timed out (attempt ${attempt + 1})`);
+            controller.abort();
+        }, timeoutMs);
 
         try {
           response = await fetch(url, { signal: controller.signal });
@@ -139,8 +147,12 @@ export async function fetchPrayerTimes(
           clearTimeout(timeoutId);
         }
 
-        if (response.ok) break;
+        if (response.ok) {
+            console.log('PrayerTimes: API success');
+            break;
+        }
 
+        console.warn(`PrayerTimes: API returned status ${response.status}`);
         // Don't retry client errors (4xx) except maybe 429
         if (response.status >= 400 && response.status < 500 && response.status !== 429) {
           throw new Error(`API request failed with status ${response.status}`);
@@ -149,6 +161,7 @@ export async function fetchPrayerTimes(
         throw new Error(`API request failed with status ${response.status}`);
       } catch (err) {
         lastError = err;
+        console.error(`PrayerTimes: Attempt ${attempt + 1} failed`, err);
         if (attempt === maxRetries) break;
         // Wait 1s before retry
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -156,7 +169,7 @@ export async function fetchPrayerTimes(
     }
 
     if (!response || !response.ok) {
-      console.error('Failed to fetch prayer times after retries:', lastError);
+      console.error('PrayerTimes: All retries failed', lastError);
       throw lastError || new Error('Failed to fetch prayer times');
     }
     
@@ -199,14 +212,17 @@ export async function fetchPrayerTimes(
 }
 
 export async function getCurrentLocation(): Promise<Location | null> {
+  console.log('PrayerTimes: Getting current location...');
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
+      console.warn('PrayerTimes: Geolocation not supported');
       resolve(null);
       return;
     }
     
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        console.log('PrayerTimes: Got coordinates', position.coords);
         const location: Location = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -214,6 +230,7 @@ export async function getCurrentLocation(): Promise<Location | null> {
         
         // Try to get city/country using reverse geocoding
         try {
+          console.log('PrayerTimes: Starting reverse geocoding');
           // Add timeout for reverse geocoding too
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 3000);
@@ -228,14 +245,17 @@ export async function getCurrentLocation(): Promise<Location | null> {
           if (data.address) {
             location.city = data.address.city || data.address.town || data.address.village;
             location.country = data.address.country;
+            console.log('PrayerTimes: Reverse geocoding success', { city: location.city, country: location.country });
           }
-        } catch {
+        } catch (err) {
+          console.warn('PrayerTimes: Reverse geocoding failed', err);
           // Ignore geocoding errors
         }
         
         resolve(location);
       },
-      () => {
+      (err) => {
+        console.error('PrayerTimes: Geolocation error', err);
         resolve(null);
       },
       { enableHighAccuracy: false, timeout: 10000 }

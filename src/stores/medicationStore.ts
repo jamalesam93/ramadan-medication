@@ -25,6 +25,8 @@ interface MedicationState {
   todaysDoses: ScheduledDose[];
   prayerTimes: PrayerTimes | null;
   isLoading: boolean;
+  // New state to track if prayer times fetch has completed (success or fail)
+  isPrayerTimesLoading: boolean;
 
   // Medication methods
   loadMedications: () => Promise<void>;
@@ -43,6 +45,7 @@ interface MedicationState {
   
   // Prayer times
   setPrayerTimes: (prayerTimes: PrayerTimes | null) => void;
+  setPrayerTimesLoading: (loading: boolean) => void;
   
   // Dashboard
   getDashboardData: () => {
@@ -61,6 +64,7 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
   todaysDoses: [],
   prayerTimes: null,
   isLoading: false,
+  isPrayerTimesLoading: true, // Start as loading until proven otherwise
 
   loadMedications: async () => {
     const medications = await getAllMedications();
@@ -163,7 +167,11 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
   },
 
   setPrayerTimes: (prayerTimes) => {
-    set({ prayerTimes });
+    set({ prayerTimes, isPrayerTimesLoading: false });
+  },
+
+  setPrayerTimesLoading: (loading) => {
+    set({ isPrayerTimesLoading: loading });
   },
 
   getDashboardData: () => {

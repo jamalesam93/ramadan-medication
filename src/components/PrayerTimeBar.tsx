@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, AlertTriangle } from 'lucide-react';
 import { PrayerTimes } from '@/types';
 import { formatTime12h, parseTimeToDate } from '@/lib/helpers';
 
@@ -33,10 +33,13 @@ export function PrayerTimeBar({ prayerTimes, isLoading }: PrayerTimeBarProps) {
     );
   }
 
+  // If not loading but prayerTimes is null, it means we failed to fetch or location is missing
   if (!prayerTimes) {
     return (
-      <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-xl p-4 text-white text-center">
-        <p>{t.prayer.loadingPrayerTimes}</p>
+      <div className="bg-gradient-to-r from-emerald-700 to-emerald-600 rounded-xl p-4 text-white text-center flex flex-col items-center gap-2">
+        <AlertTriangle className="w-6 h-6 text-amber-300" />
+        <p className="font-medium">Prayer times unavailable</p>
+        <p className="text-sm opacity-90">Please check your internet connection or location settings.</p>
       </div>
     );
   }

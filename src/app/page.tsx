@@ -14,12 +14,31 @@ import Link from 'next/link';
 
 export default function Home() {
   const { t, isRTL } = useTranslation();
-  const { medications, doses, setDoses, setPrayerTimes, updateDoseStatus, loadMedications, loadDoses, prayerTimes } = useMedicationStore();
+  const { medications, doses, setDoses, setPrayerTimes, updateDoseStatus, loadMedications, loadDoses, prayerTimes, isPrayerTimesLoading } = useMedicationStore();
   const { location, isRamadanMode } = useSettingsStore();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Prayer times are fetched by PrayerTimesProvider (layout) - starts earlier
-  const isLoading = isRamadanMode && !!location && prayerTimes === null;
+  // If isPrayerTimesLoading is explicitly false, we are done (success or fail).
+  // If it's true, we are waiting.
+  // We only show loading if:
+  // 1. Ramadan mode is on (otherwise we don't need prayer times)
+  // 2. We have a location (otherwise we show "set location" prompt)
+  // 3. We are actually loading (isPrayerTimesLoading is true)
+  // 4. AND we don't have prayer times yet (if we have stale ones, maybe showing them is better than blocking?)
+  //    But currently logic is "wait until fresh".
+  const isLoading = isRamadanMode && !!location && isPrayerTimesLoading;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Home: State Updated', {
+        isRamadanMode,
+        hasLocation: !!location,
+        isPrayerTimesLoading,
+        hasPrayerTimes: !!prayerTimes,
+        isLoadingCalc: isLoading
+    });
+  }, [isRamadanMode, location, isPrayerTimesLoading, prayerTimes, isLoading]);
 
   useEffect(() => {
     loadMedications();
@@ -214,7 +233,20 @@ export default function Home() {
             </div>
           ) : todaysDoses.length === 0 ? (
             <div className="bg-gray-50 rounded-xl p-6">
-              <ScheduleSkeleton />
+              {isLoading ? (
+                  <ScheduleSkeleton />
+              ) : (
+                  <div className="text-center text-gray-500">
+                      {isRamadanMode && !prayerTimes ? (
+                          <div className="space-y-2">
+                              <p>Failed to load prayer times.</p>
+                              <button onClick={handleRefresh} className="text-emerald-600 hover:underline">Retry</button>
+                          </div>
+                      ) : (
+                          <p>No doses scheduled for today.</p>
+                      )}
+                  </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
