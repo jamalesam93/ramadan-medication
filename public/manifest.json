@@ -1,0 +1,22 @@
+{
+  "name": "Ramadan Medication Tracker",
+  "short_name": "Ramadan Meds",
+  "description": "Track medication schedules during Ramadan with automatic adjustments for Iftar and Suhoor.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

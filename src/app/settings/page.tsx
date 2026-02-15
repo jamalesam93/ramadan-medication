@@ -15,6 +15,8 @@ import {
   Loader2,
   Languages,
   Search,
+  Download,
+  Upload,
 } from 'lucide-react';
 import { searchLocation, GeocodingResult } from '@/lib/geocoding';
 import { CalculationMethod } from '@/types';
@@ -25,6 +27,7 @@ import {
   showTestNotification,
   NotificationPermissionStatus,
 } from '@/lib/notifications';
+import { exportData, importData } from '@/lib/storage';
 
 export default function SettingsPage() {
   const { t, isRTL } = useTranslation();
@@ -183,6 +186,36 @@ export default function SettingsPage() {
     resetSettings();
     clearMedications();
     setShowClearConfirm(false);
+  };
+
+  const handleExportData = () => {
+    const data = exportData();
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ramadan-medication-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      if (importData(content)) {
+        alert(language === 'ar' ? 'تم استيراد البيانات بنجاح' : 'Data imported successfully');
+        window.location.reload();
+      } else {
+        alert(language === 'ar' ? 'فشل استيراد البيانات' : 'Failed to import data');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleToggleNotifications = async () => {
@@ -583,6 +616,38 @@ export default function SettingsPage() {
                 }`}
               />
             </button>
+          </div>
+        </div>
+
+        {/* Data Management */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className={`flex items-center gap-3 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <Download className="w-5 h-5 text-emerald-600" />
+            <div className={isRTL ? 'text-right' : ''}>
+              <h2 className="font-semibold text-gray-800">{language === 'ar' ? 'إدارة البيانات' : 'Data Management'}</h2>
+              <p className="text-sm text-gray-500">{language === 'ar' ? 'تصدير واستيراد بياناتك' : 'Export and import your data'}</p>
+            </div>
+          </div>
+
+          <div className={`flex flex-col gap-3 ${isRTL ? 'items-end' : ''}`}>
+            <button
+              onClick={handleExportData}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              <Download className="w-5 h-5" />
+              {language === 'ar' ? 'تصدير البيانات' : 'Export Data'}
+            </button>
+
+            <label className={`w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Upload className="w-5 h-5" />
+              {language === 'ar' ? 'استيراد البيانات' : 'Import Data'}
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleImportData}
+                className="hidden"
+              />
+            </label>
           </div>
         </div>
 

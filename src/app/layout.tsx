@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ClientLayout } from "@/components/ClientLayout";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon.svg',
   },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -31,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${notoSansArabic.variable} bg-gray-50`}>
+        <ServiceWorkerRegister />
         <LanguageProvider>
           <ClientLayout>
             {children}

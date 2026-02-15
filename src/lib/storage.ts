@@ -3,6 +3,7 @@ import { generateId, getCurrentDate } from './helpers';
 
 const MEDICATIONS_KEY = 'ramadan_medications';
 const DOSES_KEY = 'ramadan_doses';
+const SETTINGS_KEY = 'ramadan-medication-settings';
 
 // Medications
 
@@ -159,4 +160,51 @@ export function getDoseStatistics(startDate: string, endDate: string): {
     pending: doses.filter(d => d.status === 'pending').length,
     skipped: doses.filter(d => d.status === 'skipped').length,
   };
+}
+
+// Data Management
+
+export function exportData(): string {
+  if (typeof window === 'undefined') return '{}';
+
+  const data: Record<string, any> = {};
+  const keys = [MEDICATIONS_KEY, DOSES_KEY, SETTINGS_KEY];
+
+  keys.forEach(key => {
+    const value = localStorage.getItem(key);
+    if (value) {
+      try {
+        data[key] = JSON.parse(value);
+      } catch (e) {
+        data[key] = value;
+      }
+    }
+  });
+
+  return JSON.stringify(data, null, 2);
+}
+
+export function importData(jsonString: string): boolean {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const data = JSON.parse(jsonString);
+    if (!data || typeof data !== 'object') return false;
+
+    const validKeys = [MEDICATIONS_KEY, DOSES_KEY, SETTINGS_KEY];
+    let importedCount = 0;
+
+    Object.keys(data).forEach(key => {
+      if (validKeys.includes(key)) {
+        const value = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
+        localStorage.setItem(key, value);
+        importedCount++;
+      }
+    });
+
+    return importedCount > 0;
+  } catch (error) {
+    console.error('Failed to import data:', error);
+    return false;
+  }
 }

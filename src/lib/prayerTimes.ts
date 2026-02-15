@@ -1,6 +1,6 @@
-import { PrayerTimes, Location, CalculationMethod } from '@/types';
-import { ALADHAN_API_BASE, CALCULATION_METHODS } from './constants';
-import { getCurrentDate } from './helpers';
+import type { PrayerTimes, Location, CalculationMethod } from '../types/index.ts';
+import { ALADHAN_API_BASE, CALCULATION_METHODS } from './constants.ts';
+import { getCurrentDate } from './helpers.ts';
 
 export async function fetchPrayerTimes(
   latitude: number,
