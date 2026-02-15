@@ -3,6 +3,7 @@ import { ALADHAN_API_BASE, CALCULATION_METHODS } from './constants.ts';
 import { getCurrentDate } from './helpers.ts';
 
 const PRAYER_TIMES_STORAGE_PREFIX = 'ramadan_prayer_times_';
+const CACHE_DISTANCE_THRESHOLD = 0.1; // Approx 11km tolerance for cache hits
 
 // In-memory cache for current session
 const prayerTimesCache: Record<string, PrayerTimes> = {};
@@ -33,6 +34,64 @@ function setPersistedPrayerTimes(key: string, data: PrayerTimes): void {
   }
 }
 
+function findCachedPrayerTimes(
+  targetLat: number,
+  targetLng: number,
+  method: CalculationMethod,
+  date: string
+): PrayerTimes | null {
+  const suffix = `-${method}-${date}`;
+  const coordRegex = /^(-?\d+\.\d{4})-(-?\d+\.\d{4})$/;
+
+  // 1. Check in-memory cache with fuzzy matching
+  for (const key in prayerTimesCache) {
+    if (key.endsWith(suffix)) {
+      const coordsPart = key.slice(0, -suffix.length);
+      const match = coordsPart.match(coordRegex);
+      if (match) {
+        const lat = parseFloat(match[1]);
+        const lng = parseFloat(match[2]);
+        if (Math.abs(lat - targetLat) < CACHE_DISTANCE_THRESHOLD &&
+            Math.abs(lng - targetLng) < CACHE_DISTANCE_THRESHOLD) {
+          return prayerTimesCache[key];
+        }
+      }
+    }
+  }
+
+  // 2. Check localStorage with fuzzy matching
+  if (typeof window !== 'undefined') {
+    try {
+      const prefix = PRAYER_TIMES_STORAGE_PREFIX;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(prefix) && key.endsWith(suffix)) {
+          const middle = key.substring(prefix.length, key.length - suffix.length);
+          const match = middle.match(coordRegex);
+          if (match) {
+            const lat = parseFloat(match[1]);
+            const lng = parseFloat(match[2]);
+            if (Math.abs(lat - targetLat) < CACHE_DISTANCE_THRESHOLD &&
+                Math.abs(lng - targetLng) < CACHE_DISTANCE_THRESHOLD) {
+              const stored = localStorage.getItem(key);
+              if (stored) {
+                const parsed = JSON.parse(stored) as PrayerTimes;
+                if (parsed?.maghrib && parsed?.fajr && parsed?.date) {
+                  return parsed;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignore storage errors
+    }
+  }
+
+  return null;
+}
+
 export async function fetchPrayerTimes(
   latitude: number,
   longitude: number,
@@ -42,20 +101,20 @@ export async function fetchPrayerTimes(
   try {
     const targetDate = date || getCurrentDate();
 
-    // Create a cache key based on parameters
-    const cacheKey = `${latitude.toFixed(4)}-${longitude.toFixed(4)}-${method}-${targetDate}`;
+    // Create exact cache key for O(1) lookup
+    const exactCacheKey = `${latitude.toFixed(4)}-${longitude.toFixed(4)}-${method}-${targetDate}`;
 
-    // 1. Check in-memory cache
-    if (prayerTimesCache[cacheKey]) {
-      return prayerTimesCache[cacheKey];
+    // 1. Try exact match first (fastest)
+    if (prayerTimesCache[exactCacheKey]) {
+      return prayerTimesCache[exactCacheKey];
     }
 
-    // 2. Check persisted cache (localStorage)
-    const storageKey = getStorageKey(latitude, longitude, method, targetDate);
-    const persisted = getPersistedPrayerTimes(storageKey);
-    if (persisted) {
-      prayerTimesCache[cacheKey] = persisted;
-      return persisted;
+    // 2. Try fuzzy match (smart caching)
+    const cached = findCachedPrayerTimes(latitude, longitude, method, targetDate);
+    if (cached) {
+      // Store under exact key for next time
+      prayerTimesCache[exactCacheKey] = cached;
+      return cached;
     }
 
     const [year, month, day] = targetDate.split('-');
@@ -63,10 +122,42 @@ export async function fetchPrayerTimes(
     
     const url = `${ALADHAN_API_BASE}/timings/${day}-${month}-${year}?latitude=${latitude}&longitude=${longitude}&method=${methodValue}`;
     
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
+    // 3. Fetch from API with timeout and retry
+    let response: Response | null = null;
+    let lastError: unknown = null;
+    const maxRetries = 1;
+    const timeoutMs = 5000;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          response = await fetch(url, { signal: controller.signal });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+
+        if (response.ok) break;
+
+        // Don't retry client errors (4xx) except maybe 429
+        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        throw new Error(`API request failed with status ${response.status}`);
+      } catch (err) {
+        lastError = err;
+        if (attempt === maxRetries) break;
+        // Wait 1s before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    if (!response || !response.ok) {
+      console.error('Failed to fetch prayer times after retries:', lastError);
+      throw lastError || new Error('Failed to fetch prayer times');
     }
     
     const data = await response.json();
@@ -91,8 +182,13 @@ export async function fetchPrayerTimes(
       date: targetDate,
     };
 
-    // Store in memory and persist to disk for fast cold-start
-    prayerTimesCache[cacheKey] = result;
+    // Store in memory and persist to disk
+    // We store using the EXACT requested coordinates to ensure cache hits next time
+    // even if we used fuzzy logic to find a similar one earlier.
+    prayerTimesCache[exactCacheKey] = result;
+
+    // Also persist to localStorage
+    const storageKey = getStorageKey(latitude, longitude, method, targetDate);
     setPersistedPrayerTimes(storageKey, result);
 
     return result;
@@ -118,9 +214,16 @@ export async function getCurrentLocation(): Promise<Location | null> {
         
         // Try to get city/country using reverse geocoding
         try {
+          // Add timeout for reverse geocoding too
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${location.latitude}&lon=${location.longitude}&format=json`
+            `https://nominatim.openstreetmap.org/reverse?lat=${location.latitude}&lon=${location.longitude}&format=json`,
+            { signal: controller.signal }
           );
+          clearTimeout(timeoutId);
+
           const data = await response.json();
           if (data.address) {
             location.city = data.address.city || data.address.town || data.address.village;
