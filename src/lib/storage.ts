@@ -1,26 +1,59 @@
 import { Medication, ScheduledDose, DoseStatus } from '@/types';
 import { generateId, getCurrentDate } from './helpers';
+import { encrypt, decrypt } from './crypto';
 
 const MEDICATIONS_KEY = 'ramadan_medications';
 const DOSES_KEY = 'ramadan_doses';
 
+// Generic helper for retrieving and decrypting data
+async function getStoredData<T>(key: string): Promise<T[]> {
+  if (typeof window === 'undefined') return [];
+  const data = localStorage.getItem(key);
+  if (!data) return [];
+
+  try {
+    // Try to decrypt first
+    const decrypted = await decrypt(data);
+    return JSON.parse(decrypted);
+  } catch (e) {
+    // Fallback for existing plaintext data or if it's the first time using the new key
+    try {
+      return JSON.parse(data);
+    } catch (parseError) {
+      console.error(`Failed to parse data for key ${key}:`, parseError);
+      return [];
+    }
+  }
+}
+
+// Generic helper for encrypting and saving data
+async function setStoredData<T>(key: string, data: T[]): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const jsonString = JSON.stringify(data);
+    const encrypted = await encrypt(jsonString);
+    localStorage.setItem(key, encrypted);
+  } catch (error) {
+    console.error(`Failed to save data for key ${key}:`, error);
+    // As a fallback, we could save as plaintext, but that defeats the purpose.
+    // Given this is a security fix, we prefer failing over insecure storage.
+  }
+}
+
 // Medications
 
-export function getAllMedications(): Medication[] {
-  if (typeof window === 'undefined') return [];
-  const data = localStorage.getItem(MEDICATIONS_KEY);
-  return data ? JSON.parse(data) : [];
+export async function getAllMedications(): Promise<Medication[]> {
+  return getStoredData<Medication>(MEDICATIONS_KEY);
 }
 
-export function saveMedications(medications: Medication[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(MEDICATIONS_KEY, JSON.stringify(medications));
+export async function saveMedications(medications: Medication[]): Promise<void> {
+  return setStoredData(MEDICATIONS_KEY, medications);
 }
 
-export function createMedication(
+export async function createMedication(
   medication: Omit<Medication, 'id' | 'createdAt' | 'updatedAt'>
-): Medication {
-  const medications = getAllMedications();
+): Promise<Medication> {
+  const medications = await getAllMedications();
   const now = new Date().toISOString();
   
   const newMedication: Medication = {
@@ -31,21 +64,21 @@ export function createMedication(
   };
   
   medications.push(newMedication);
-  saveMedications(medications);
+  await saveMedications(medications);
   
   return newMedication;
 }
 
-export function getMedicationById(id: string): Medication | null {
-  const medications = getAllMedications();
+export async function getMedicationById(id: string): Promise<Medication | null> {
+  const medications = await getAllMedications();
   return medications.find(m => m.id === id) || null;
 }
 
-export function updateMedication(
+export async function updateMedication(
   id: string,
   updates: Partial<Omit<Medication, 'id' | 'createdAt' | 'updatedAt'>>
-): Medication | null {
-  const medications = getAllMedications();
+): Promise<Medication | null> {
+  const medications = await getAllMedications();
   const index = medications.findIndex(m => m.id === id);
   
   if (index === -1) return null;
@@ -56,52 +89,49 @@ export function updateMedication(
     updatedAt: new Date().toISOString(),
   };
   
-  saveMedications(medications);
+  await saveMedications(medications);
   return medications[index];
 }
 
-export function deleteMedication(id: string): boolean {
-  const medications = getAllMedications();
+export async function deleteMedication(id: string): Promise<boolean> {
+  const medications = await getAllMedications();
   const filtered = medications.filter(m => m.id !== id);
   
   if (filtered.length === medications.length) return false;
   
-  saveMedications(filtered);
+  await saveMedications(filtered);
   
   // Also delete associated doses
-  const doses = getAllDoses();
+  const doses = await getAllDoses();
   const filteredDoses = doses.filter(d => d.medicationId !== id);
-  saveDoses(filteredDoses);
+  await saveDoses(filteredDoses);
   
   return true;
 }
 
 // Doses
 
-export function getAllDoses(): ScheduledDose[] {
-  if (typeof window === 'undefined') return [];
-  const data = localStorage.getItem(DOSES_KEY);
-  return data ? JSON.parse(data) : [];
+export async function getAllDoses(): Promise<ScheduledDose[]> {
+  return getStoredData<ScheduledDose>(DOSES_KEY);
 }
 
-export function saveDoses(doses: ScheduledDose[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(DOSES_KEY, JSON.stringify(doses));
+export async function saveDoses(doses: ScheduledDose[]): Promise<void> {
+  return setStoredData(DOSES_KEY, doses);
 }
 
-export function getDosesByDate(date: string): ScheduledDose[] {
-  const doses = getAllDoses();
+export async function getDosesByDate(date: string): Promise<ScheduledDose[]> {
+  const doses = await getAllDoses();
   return doses.filter(d => d.date === date).sort((a, b) => 
     new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime()
   );
 }
 
-export function getTodaysDoses(): ScheduledDose[] {
+export async function getTodaysDoses(): Promise<ScheduledDose[]> {
   return getDosesByDate(getCurrentDate());
 }
 
-export function createScheduledDose(dose: Omit<ScheduledDose, 'id'>): ScheduledDose {
-  const doses = getAllDoses();
+export async function createScheduledDose(dose: Omit<ScheduledDose, 'id'>): Promise<ScheduledDose> {
+  const doses = await getAllDoses();
   
   const newDose: ScheduledDose = {
     ...dose,
@@ -109,17 +139,17 @@ export function createScheduledDose(dose: Omit<ScheduledDose, 'id'>): ScheduledD
   };
   
   doses.push(newDose);
-  saveDoses(doses);
+  await saveDoses(doses);
   
   return newDose;
 }
 
-export function updateDoseStatus(
+export async function updateDoseStatus(
   id: string,
   status: DoseStatus,
   actualTime?: string
-): ScheduledDose | null {
-  const doses = getAllDoses();
+): Promise<ScheduledDose | null> {
+  const doses = await getAllDoses();
   const index = doses.findIndex(d => d.id === id);
   
   if (index === -1) return null;
@@ -130,28 +160,29 @@ export function updateDoseStatus(
     actualTime,
   };
   
-  saveDoses(doses);
+  await saveDoses(doses);
   return doses[index];
 }
 
-export function deleteDosesByDate(date: string): void {
-  const doses = getAllDoses();
+export async function deleteDosesByDate(date: string): Promise<void> {
+  const doses = await getAllDoses();
   const filtered = doses.filter(d => d.date !== date);
-  saveDoses(filtered);
+  await saveDoses(filtered);
 }
 
-export function dosesExistForDate(date: string): boolean {
-  const doses = getDosesByDate(date);
+export async function dosesExistForDate(date: string): Promise<boolean> {
+  const doses = await getDosesByDate(date);
   return doses.length > 0;
 }
 
-export function getDoseStatistics(startDate: string, endDate: string): {
+export async function getDoseStatistics(startDate: string, endDate: string): Promise<{
   taken: number;
   missed: number;
   pending: number;
   skipped: number;
-} {
-  const doses = getAllDoses().filter(d => d.date >= startDate && d.date <= endDate);
+}> {
+  const allDoses = await getAllDoses();
+  const doses = allDoses.filter(d => d.date >= startDate && d.date <= endDate);
   
   return {
     taken: doses.filter(d => d.status === 'taken').length,

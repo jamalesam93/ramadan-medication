@@ -35,11 +35,11 @@ interface MedicationState {
   
   // Dose methods
   loadDoses: () => Promise<void>;
-  setDoses: (doses: ScheduledDose[]) => void;
-  updateDoseStatus: (doseId: string, status: DoseStatus) => void;
-  loadTodaysDoses: () => void;
-  loadDosesForDate: (date: string) => ScheduledDose[];
-  generateDoses: (date: string, prayerTimes: PrayerTimes) => void;
+  setDoses: (doses: ScheduledDose[]) => Promise<void>;
+  updateDoseStatus: (doseId: string, status: DoseStatus) => Promise<void>;
+  loadTodaysDoses: () => Promise<void>;
+  loadDosesForDate: (date: string) => Promise<ScheduledDose[]>;
+  generateDoses: (date: string, prayerTimes: PrayerTimes) => Promise<void>;
   
   // Prayer times
   setPrayerTimes: (prayerTimes: PrayerTimes | null) => void;
@@ -63,12 +63,12 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
   isLoading: false,
 
   loadMedications: async () => {
-    const medications = getAllMedications();
+    const medications = await getAllMedications();
     set({ medications });
   },
 
   addMedication: async (medicationData) => {
-    const newMedication = storageCreateMedication(medicationData);
+    const newMedication = await storageCreateMedication(medicationData);
     set((state) => ({
       medications: [...state.medications, newMedication],
     }));
@@ -76,7 +76,7 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
   },
 
   updateMedication: async (id, updates) => {
-    const updatedMedication = storageUpdateMedication(id, updates);
+    const updatedMedication = await storageUpdateMedication(id, updates);
     if (updatedMedication) {
       set((state) => ({
         medications: state.medications.map((m) =>
@@ -88,7 +88,7 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
   },
 
   deleteMedication: async (id) => {
-    const success = storageDeleteMedication(id);
+    const success = await storageDeleteMedication(id);
     if (success) {
       set((state) => ({
         medications: state.medications.filter((m) => m.id !== id),
@@ -104,18 +104,18 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
   },
 
   loadDoses: async () => {
-    const doses = getAllDoses();
+    const doses = await getAllDoses();
     set({ doses });
   },
 
-  setDoses: (doses) => {
-    saveDoses(doses);
+  setDoses: async (doses) => {
+    await saveDoses(doses);
     set({ doses });
   },
 
-  updateDoseStatus: (doseId, status) => {
+  updateDoseStatus: async (doseId, status) => {
     const now = status === 'taken' ? new Date().toISOString() : undefined;
-    storageUpdateDoseStatus(doseId, status, now);
+    await storageUpdateDoseStatus(doseId, status, now);
     set((state) => ({
       doses: state.doses.map((d) =>
         d.id === doseId ? { ...d, status, actualTime: now } : d
@@ -126,29 +126,29 @@ export const useMedicationStore = create<MedicationState>((set, get) => ({
     }));
   },
 
-  loadTodaysDoses: () => {
-    const doses = getTodaysDoses();
+  loadTodaysDoses: async () => {
+    const doses = await getTodaysDoses();
     set({ todaysDoses: doses });
   },
 
-  loadDosesForDate: (date) => {
-    return getDosesByDate(date);
+  loadDosesForDate: async (date) => {
+    return await getDosesByDate(date);
   },
 
-  generateDoses: (date, prayerTimes) => {
+  generateDoses: async (date, prayerTimes) => {
     set({ isLoading: true });
     
     const { medications } = get();
     
-    if (dosesExistForDate(date)) {
-      deleteDosesByDate(date);
+    if (await dosesExistForDate(date)) {
+      await deleteDosesByDate(date);
     }
     
     const dosesToCreate = generateAllDosesForDate(medications, prayerTimes, date);
     
     const createdDoses: ScheduledDose[] = [];
     for (const doseData of dosesToCreate) {
-      const dose = createScheduledDose(doseData);
+      const dose = await createScheduledDose(doseData);
       createdDoses.push(dose);
     }
     
