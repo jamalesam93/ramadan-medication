@@ -4,7 +4,7 @@ export const ar: Translations = {
   // Common
   common: {
     appName: 'أدوية رمضان',
-    loading: 'جاري التحميل...',
+    loading: 'جارٍ التحميل...',
     save: 'حفظ',
     cancel: 'إلغاء',
     delete: 'حذف',
@@ -141,14 +141,14 @@ export const ar: Translations = {
 
   // Dose status
   doseStatus: {
-    taken: 'تم التناول',
-    missed: 'فائت',
-    skipped: 'تم التخطي',
+    taken: 'تم أخذها',
+    missed: 'فائتة',
+    skipped: 'تم تخطيها',
     pending: 'قيد الانتظار',
-    overdue: 'متأخر',
-    markTaken: 'تم التناول',
+    overdue: 'متأخرة',
+    markTaken: 'تأكيد التناول',
     skip: 'تخطي',
-    nextDose: 'الجرعة التالية',
+    nextDose: 'الجرعة القادمة',
     doseTimePassed: 'انتهى وقت الجرعة',
   },
 
@@ -209,6 +209,14 @@ export const ar: Translations = {
     language: 'اللغة',
     languageDesc: 'اختر لغتك المفضلة',
     
+    // Data Management
+    dataManagement: 'إدارة البيانات',
+    dataManagementDesc: 'تصدير واستيراد بياناتك',
+    exportData: 'تصدير البيانات',
+    importData: 'استيراد البيانات',
+    importSuccess: 'تم استيراد البيانات بنجاح',
+    importError: 'فشل استيراد البيانات',
+
     // Clear Data
     clearAllData: 'حذف جميع البيانات',
     clearAllDataDesc: 'إزالة جميع الأدوية والإعدادات',

@@ -1,4 +1,4 @@
-import { CalculationMethod, PillColor, PillShape } from '@/types';
+import type { CalculationMethod, PillColor, PillShape } from '../types/index.ts';
 
 export const APP_NAME = 'Ramadan Medication';
 export const ALADHAN_API_BASE = 'https://api.aladhan.com/v1';

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { en, ar, Translations } from '@/lib/translations';
+import { en, ar, fr, Translations } from '@/lib/translations';
 
-export type Language = 'en' | 'ar';
+export type Language = 'en' | 'ar' | 'fr';
 
 interface LanguageContextType {
   language: Language;
@@ -18,6 +18,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const translations: Record<Language, Translations> = {
   en,
   ar,
+  fr,
 };
 
 const LANGUAGE_STORAGE_KEY = 'ramadan-medication-language';
@@ -33,7 +34,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   // Load saved language on mount
   useEffect(() => {
     const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null;
-    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ar')) {
+    if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'ar' || savedLanguage === 'fr')) {
       setLanguageState(savedLanguage);
     }
     setIsHydrated(true);

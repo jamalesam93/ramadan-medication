@@ -1,6 +1,6 @@
-import { Medication, ScheduledDose, PrayerTimes, MedicationFrequency, TimePreference } from '@/types';
-import { parseTimeToDate, addMinutesToTime, subtractMinutesFromTime, timeToMinutes, minutesToTime } from './helpers';
-import { getIftarTime, getRecommendedSuhoorTime } from './prayerTimes';
+import type { Medication, ScheduledDose, PrayerTimes, MedicationFrequency, TimePreference } from '../types/index.ts';
+import { parseTimeToDate, addMinutesToTime, subtractMinutesFromTime, timeToMinutes, minutesToTime } from './helpers.ts';
+import { getIftarTime, getRecommendedSuhoorTime } from './prayerTimes.ts';
 
 interface DoseMapping {
   times: string[];
