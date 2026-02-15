@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useMedicationStore } from '@/stores/medicationStore';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -99,32 +99,48 @@ export default function Home() {
   };
 
   // Get today's doses sorted by time
-  const todaysDoses = doses
-    .filter((dose) => {
-      const today = new Date();
-      const doseDate = new Date(dose.scheduledTime);
-      return (
-        doseDate.getDate() === today.getDate() &&
-        doseDate.getMonth() === today.getMonth() &&
-        doseDate.getFullYear() === today.getFullYear()
-      );
-    })
-    .sort((a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime());
+  const todaysDoses = useMemo(() => {
+    const today = new Date();
+    const todayDay = today.getDate();
+    const todayMonth = today.getMonth();
+    const todayYear = today.getFullYear();
+
+    return doses
+      .filter((dose) => {
+        const doseDate = new Date(dose.scheduledTime);
+        return (
+          doseDate.getDate() === todayDay &&
+          doseDate.getMonth() === todayMonth &&
+          doseDate.getFullYear() === todayYear
+        );
+      })
+      .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+  }, [doses]);
 
   // Find next pending dose
-  const now = new Date();
-  const nextDose = todaysDoses.find(
-    (dose) => dose.status === 'pending' && new Date(dose.scheduledTime) > now
-  );
+  const nextDose = useMemo(() => {
+    const nowIso = new Date().toISOString();
+    return todaysDoses.find(
+      (dose) => dose.status === 'pending' && dose.scheduledTime > nowIso
+    );
+  }, [todaysDoses]);
 
   const getMedicationForDose = (dose: ScheduledDose): Medication | undefined => {
     return medications.find((med) => med.id === dose.medicationId);
   };
 
   // Stats
-  const completedCount = todaysDoses.filter((d) => d.status === 'taken').length;
-  const pendingCount = todaysDoses.filter((d) => d.status === 'pending').length;
-  const missedCount = todaysDoses.filter((d) => d.status === 'missed').length;
+  const { completedCount, pendingCount, missedCount } = useMemo(() => {
+    return {
+      completedCount: todaysDoses.filter((d) => d.status === 'taken').length,
+      pendingCount: todaysDoses.filter((d) => d.status === 'pending').length,
+      missedCount: todaysDoses.filter((d) => d.status === 'missed').length,
+    };
+  }, [todaysDoses]);
+
+  const nextDoseTargetTime = useMemo(() =>
+    nextDose ? new Date(nextDose.scheduledTime) : null
+  , [nextDose]);
 
   if (!location) {
     return (
@@ -188,7 +204,7 @@ export default function Home() {
         {/* Countdown to Next Dose */}
         {nextDose && (
           <CountdownTimer
-            targetTime={new Date(nextDose.scheduledTime)}
+            targetTime={nextDoseTargetTime}
             label={t.home.untilNextDose}
           />
         )}
